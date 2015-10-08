@@ -4,7 +4,7 @@
 %	
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
--module(gyrus).
+-module(g_node).
 -export([start/0]).
 
 -define(PING_FREQUENCY,1000).
@@ -34,19 +34,14 @@ connect_main(Main_node) ->
 
 get_workload(Main_node) ->
 	receive
-		workload -> 
+		{workload,Bins} -> 
 			io:format("Girus: Got workload~n"),
-			girus(Main_node)
+			lists:foreach(  fun({Name,Bin})-> 
+								file:write_file(Name,Bin),
+								ets:file2tab(Name),
+								spawn(gyrus,gyrus,[Name, Main_node])
+							end,Bins)
 	end.
 
-
-
-girus(Main_node) ->
-	receive
-		quit -> io:format("Girus: quiting...~n");
-		Msg ->
-			io:format("Girus: got message: ~p~n",[Msg]),
-			girus(Main_node)
-	end.
 
 

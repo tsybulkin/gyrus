@@ -4,7 +4,7 @@
 %	
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
--module(cluster).
+-module(m_node).
 -export([start/0]).
 
 -define(GYRUS_CONNECT_TIMEOUT, 3000).
@@ -33,9 +33,14 @@ start(Acc) ->
 	end.
 
 
+
 schedule(Pids) ->
+	Data_dir = "data",
+	{ok,Ls} = file:list_dir(Data_dir),
+	Bins = [ begin {ok,Bin}=file:read_file(join(Data_dir,File)), {File,Bin} end || File <- Ls],
+
 	io:format("Got ~p girus nodes~n",[length(Pids)]),
-	lists:foreach( fun(Pid)-> Pid ! workload end,Pids).
+	lists:foreach( fun(Pid)-> Pid ! {workload,Bins} end,Pids).
 	
 
 
