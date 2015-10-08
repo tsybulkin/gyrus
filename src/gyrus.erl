@@ -19,12 +19,12 @@ gyrus(Gyrus,Main_node) ->
 	end.
 
 
-gyrus(Gyrus,Main_node,Next_gyrus_Pid) ->
+gyrus(_Gyrus,_Main_node,_Next_gyrus_Pid) ->
 	receive
 		quit -> io:format("Girus: quiting...~n");
 
-		{get_state_value, Game, State, Pid} -> Pid ! 0;
+		{get_state_value, _Game, _State, Pid} -> Pid ! 0;
 
-		{get_move, Game, State, Pid} -> Pid ! {8,8}
+		{get_move, _Game, _State, Pid} -> Pid ! {8,8}
 	end.
 

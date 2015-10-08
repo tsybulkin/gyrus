@@ -1,0 +1,12 @@
+{application, gyrus,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib
+                 ]},
+  {mod, { gyrus_app, []}},
+  {env, []}
+ ]}.
