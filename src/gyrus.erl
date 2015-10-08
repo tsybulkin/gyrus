@@ -9,13 +9,20 @@
 
 
 
-gyrus(Gyrus,Main_node) ->
-	{main,Main_node} ! {Gyrus,self()},
+gyrus(File,Main_node) ->
+	{main,Main_node} ! {File,self()},
+	case ets:file2tab(File) of
+		{ok,_} -> ok;
+		{error,Reason} ->
+			io:format("Error occured. Reason: ~p~nCreating new~n",[Reason]),
+			ets:new(list_to_atom(File),[named_table])
+	end,
+	io:format("gyrus done~n"),
 
 	receive
 		quit -> io:format("Girus: quiting...~n");
 
-		{next_gyrus,Next_gyrus_pid} -> gyrus(Gyrus,Main_node,Next_gyrus_pid)
+		{next_gyrus,Next_gyrus_pid} -> gyrus(File,Main_node,Next_gyrus_pid)
 	end.
 
 

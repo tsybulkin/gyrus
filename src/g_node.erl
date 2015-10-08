@@ -12,12 +12,12 @@
 
 start() ->
 	Main_node = 'main@Ians-MacBook-Air.local',
-	ping(Main_node).
+	pinging(Main_node).
 
-ping(Main_node) ->
+pinging(Main_node) ->
 	case net_adm:ping(Main_node) of
-		pang -> timer:sleep(?PING_FREQUENCY), ping(Main_node);
-		pong -> connect_main(Main_node)
+		pang -> timer:sleep(?PING_FREQUENCY), pinging(Main_node);
+		pong -> io:format("ping-pong~n"), connect_main(Main_node)
 	end.
 
 
@@ -34,13 +34,11 @@ connect_main(Main_node) ->
 
 get_workload(Main_node) ->
 	receive
-		{workload,Bins} -> 
-			io:format("Girus: Got workload~n"),
-			lists:foreach(  fun({Name,Bin})-> 
-								file:write_file(Name,Bin),
-								ets:file2tab(Name),
+		{workload,Workload} -> 
+			io:format("Girus: Got workload:~p~n",[Workload]),
+			lists:foreach(  fun({Name,_Size})-> 
 								spawn(gyrus,gyrus,[Name, Main_node])
-							end,Bins)
+							end,Workload)
 	end.
 
 
