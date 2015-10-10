@@ -1,4 +1,4 @@
--module(discovery_app).
+-module(gyrus_app).
 
 -behaviour(application).
 
@@ -15,20 +15,20 @@ start() ->
   ok = application:start(ranch),
   ok = application:start(cowlib),
   ok = application:start(cowboy),
-  ok = application:start(discovery).
+  ok = application:start(gyrus).
 
 start(_StartType, _StartArgs) ->
     Dispatch = cowboy_router:compile([
       {'_', [
-        {"/:box", cowboy_static, {file, "priv/monitor.html"}},
-        %{"/static[...]", cowboy_static, {dir, "static"}}
-        {"/websocket/:box", ws_handler, []}
+        {"/", cowboy_static, {file, "priv/index.html"}},
+        {"/static/[...]", cowboy_static, {dir, "priv/static"}},
+        {"/websocket", ws_handler, []}
       ]}
     ]),
     {ok, _} = cowboy:start_http(http, 100, [{port, 8080}],
       [{env, [{dispatch, Dispatch}]}]),
 
-    discovery_sup:start_link().
+    gyrus_sup:start_link().
 
 stop(_State) ->
     ok.

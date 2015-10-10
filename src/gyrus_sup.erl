@@ -1,4 +1,4 @@
--module(discovery_sup).
+-module(gyrus_sup).
 
 -behaviour(supervisor).
 
