@@ -6,7 +6,9 @@
 
 -module(state).
 -export([init_state/0, t/0,
-		board_to_position/1]).
+		board_to_position/1,
+		get_key/1
+		]).
 
 
 
@@ -46,6 +48,26 @@ find_empty_columns([Row|Rows],MinInd,MaxInd) ->
 	end,
 	find_empty_columns(Rows,MinInd1,MaxInd1);
 find_empty_columns([],MinInd,MaxInd) -> {MinInd,MaxInd}.
+
+
+
+
+get_key(Position) ->
+	Cy = size(Position) + 1,
+	Cx = size(element(1,Position)) + 1,
+	{Ws,Bs} = lists:foldl(
+		fun(Y,{Ws1,Bs1})-> 
+			Row = element(Y,Position),
+			lists:foldl(
+				fun(X,{Ws2,Bs2})->
+					case element(X,Row) of
+						e -> {Ws2,Bs2};
+						w -> {[abs(2*X-Cx)+abs(2*Y-Cy)|Ws2],Bs2};
+						b -> {Ws2,[abs(2*X-Cx)+abs(2*Y-Cy)|Bs2]}
+					end
+				end, {Ws1,Bs1}, lists:seq(1,Cx-1))
+		end,{[],[]},lists:seq(1,Cy-1)),
+	{lists:sort(Ws),lists:sort(Bs)}.
 
 
 
@@ -91,11 +113,12 @@ t() ->
 	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
 	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e}},
 
-	 case St=board_to_position(Board) of
-	 	{4,6,{
-			 {e,w,e,e,e,e,e,b},
-			 {e,e,e,e,e,e,b,e},
-			 {b,e,e,w,e,e,e,e}}} -> ok;
-		_ -> io:format("Wrong: ~p~n",[St])
-	end.
+	case St=board_to_position(Board) == {4,6,Pos={
+												 {e,w,e,e,e,e,e,b},
+												 {e,e,e,e,e,e,b,e},
+												 {b,e,e,w,e,e,e,e}}} of
+		true -> ok;
+		_ -> error(St)
+	end,
+	get_key(Pos)={[3,7],[5,9,9]}.
 
