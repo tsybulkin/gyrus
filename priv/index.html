@@ -3,157 +3,118 @@
 <head>
 
   <meta charset="utf-8" />
-    <title>Board</title>
+  <title>Board</title>
 
-  <link rel="stylesheet" type="text/css" href="static/css/reset.css">
+  <link rel="stylesheet" href="static/css/normalize.css">
+  <link rel="stylesheet" href="static/css/pure-min.css">
+  <link rel="stylesheet" href="static/css/board.css">
+
   <style type="text/css">
 
-    .board {
-      margin-left: 50px;
-      margin-top: 50px;
-      position: relative;
-      display: inline-block;    // div not larger than its contents
-    }
+  html,body {
+    height:100%;
+}
 
-    .board table {
-        background-color: rgb(251,234,173);
-        table-layout: fixed;
-    }
+  	.main {
+  		width: 85%;
+  		margin: 0 auto;
+  		font-family: sans-serif;
+  		font-size: 20px;
+  	}
 
-    .board td {
-        border: 1px solid rgb(167,169,172);
-    }
+  	.main .h {
+  		color: rgb(152,13,10);
+  		text-align: center;
+  	}
+  	.main h1 {
+  		font-size: 6vw;
+  	}
+  	.main h3 {
+  		font-size: 4vw;
+  	}
 
-    .circle {
-      border-radius: 50%;
-    }
+  	.main p {
+  		text-indent: 1.5em;
+  	}
 
-    .white {
-      background-color: white;
-      border: 2px solid rgb(122,64,152);
-    }
-    .black {
-      background-color: rgb(114,76,140);
-      border: 2px solid rgb(63,33,75)
-    }
-    .next {
-      border: 2px dashed red;
-    }
+  	.main div.text {
+  		/*margin: 10px 20px 15px 20px;*/
+  	}
+
+  	.main .box {
+  		margin: 5px;
+  		padding: 20px;
+  		background: linear-gradient(rgb(250,250,250), rgb(191,191,191));
+  		border-radius: 5px;
+  		height: 100%;
+  	}
+
+	.button-easy,
+	.button-average,
+	.button-hard {
+		color: white;
+		border-radius: 10px;
+		text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+		font-size: 25px;
+		width: 80%;
+		height: 70px;
+		margin-bottom: 15px;
+		display: block;
+	}
+	.button-easy {
+		background: rgb(48, 152, 80); 
+	}
+	.button-average {
+		background: rgb(197, 150, 55); 
+	}
+	.button-hard {
+		background: rgb(193, 89, 34); 
+	}
 
   </style>
-
-  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
 
 </head>
 
 <body>
-  
+
+	<div class="pure-g main">
+	    <div class="pure-u-1-3">
+		    <div class="box" id="left_box">
+		    	<h3 class="h">statistics</h3>
+
+		    	<div class='text'>games played  </div>
+		    	<div class='text'>by bot: <span>0</span></div>
+		    	<br />
+		    	<div class='text'>agains people:</div>
+		    	<div class='text'>Win: <span>0</span></div>
+		    	<div class='text'>Lost: <span>0</span></div>
+		    	<div class='text'>Draw: <span>0</span></div>
+		    </div>
+
+	    </div>
+	    <div class="pure-u-1-3">
+		    <div class="box">
+		    	<h1 class="h">gomoku</h1>
+		    	<p>Play free-style Gomoku or five- in-a-row board game against AI-bot or watch how it plays against other people.</p>
+		    	<p>During each game the Bot learns new tricks, which it will use against you next time.</p>
+		    	<p>Enjoy...</p>
+		    </div>
+	    </div>
+	    <div class="pure-u-1-3">
+		    <div class="box">
+		    	<h3 class="h">new game</h3>
+		    	<center>
+		    		<button class="button-easy pure-button">easy</button>
+		    		<button class="button-average pure-button">average</button>
+		    		<button class="button-hard pure-button">hard</button>
+		    	</center>
+		    </div>
+	    </div>
+	</div>
+
+  <script type="text/javascript" src="static/js/underscore-min.js"></script>
+  <script type="text/javascript" src="static/js/board.js"></script>
   <script type="text/javascript">
-
-    function Board(parent, cellSize, active) {
-
-      var size = 14;
-      active = typeof active !== 'undefined' ? active : false;
-
-      // create parent dom element
-      var board = document.createElement('div');
-      board.className = 'board';
-      parent.appendChild(board);
-      this.div = board;
-
-      var table = document.createElement('table');
-      table.className = 'board_table';
-      board.appendChild(table);
-
-      // add rows
-      _.times(size, function(n) {
-        var row = document.createElement("tr");
-        table.appendChild(row);
-
-        // add cells
-        _.times(size, function(n) {
-          var cell = document.createElement("td");
-          cell.style.width = cellSize + 'px';
-          cell.style.height = cellSize + 'px';
-          row.appendChild(cell);
-        });
-
-      });
-
-      if (active) {
-        var ch = document.createElement('div');
-        ch.className = 'circle next';
-        ch.style.width = cellSize-4 + 'px';
-        ch.style.height = cellSize-4 + 'px';
-        ch.style.position = 'absolute';
-        // ch.style.visibility = "hidden"
-        board.appendChild(ch);
-        var next_checker = ch;
-
-        // table.onmouseenter = function() { next_checker.style.visibility = "visible"; }
-        // table.onmouseleave = function() { next_checker.style.visibility = "hidden"; }
-
-        function _handleMouse(event) {
-          // next_checker.style.visibility = "visible";
-
-          // var x = Math.round(event.layerX / (cellSize+1)) + 1;
-          var y = 15 - Math.round(event.layerY / (cellSize+1));
-
-          next_checker.style.left = Math.round(event.layerX / (cellSize+1)) * (cellSize+1) - cellSize/2 + 1 + 'px';
-          next_checker.style.top = Math.round(event.layerY / (cellSize+1)) * (cellSize+1) - cellSize/2 - 1 + 'px';
-
-        }
-
-        table.onmousemove = _handleMouse;
-      }
-
-      this.addChecker = function(x, y, color) {
-        var ch = document.createElement('div');
-        ch.className = 'circle ' + color;
-        ch.style.width = cellSize-4 + 'px';
-        ch.style.height = cellSize-4 + 'px';
-        ch.style.position = 'absolute';
-        var cell_size = cellSize;
-        var ch_size = cellSize;
-        ch.style.left = cell_size*(x-1) - ch_size/2 + x + 'px';
-        ch.style.bottom = cell_size*(y-1) - ch_size/2 + y + 'px';
-        this.div.appendChild(ch);
-      }
-    }
-
-    var b = new Board(document.body, 10);
-
-    b.addChecker(1,1,'black');
-    b.addChecker(2,2,'white');
-    b.addChecker(3,3,'black');
-    b.addChecker(3,2,'black');
-    b.addChecker(1,2,'black');
-
-    b.addChecker(5,5,'white');
-    b.addChecker(5,6,'black');
-    b.addChecker(6,6,'black');
-    b.addChecker(6,5,'black');
-    b.addChecker(4,5,'white');
-
-    b.addChecker(14,14,'white');
-    b.addChecker(14,15,'black');
-    b.addChecker(15,15,'black');
-    b.addChecker(15,14,'black');
-    b.addChecker(13,14,'white');
-
-    b = new Board(document.body, 40, true);
-    b.addChecker(1,1,'black');
-    b.addChecker(2,2,'white');
-    b.addChecker(3,3,'black');
-    b.addChecker(3,2,'black');
-    b.addChecker(1,2,'black');
-
-    b.addChecker(14,14,'white');
-    b.addChecker(14,15,'black');
-    b.addChecker(15,15,'black');
-    b.addChecker(15,14,'black');
-    b.addChecker(13,14,'white');
-
 
   </script>
 
