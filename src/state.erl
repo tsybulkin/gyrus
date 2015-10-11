@@ -134,5 +134,11 @@ t() ->
 		true -> ok;
 		_ -> error(St)
 	end,
-	get_key(Pos).
+	get_key(Pos),
+	lists:foldl(fun(J,P)-> 
+					{P1,_} = next_variant(P,J),
+					io:format("~p~n",[get_key(P1)]),
+					P1
+				end,Pos,lists:seq(1,7)).
+
 
