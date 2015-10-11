@@ -7,7 +7,8 @@
 -module(state).
 -export([init_state/0, t/0,
 		board_to_position/1,
-		get_key/1
+		get_key/1,
+		next_variant/2
 		]).
 
 
@@ -71,6 +72,19 @@ get_key(Position) ->
 
 
 
+next_variant(Position,4) -> {list_to_tuple(lists:reverse(tuple_to_list(Position))),5}; % reflection
+next_variant(Position,Var) -> % rotation
+	Rows = tuple_to_list(Position),
+	[Row|_] = Rows, 
+	N = size(Row),
+	Ls = lists:foldl(fun(J,Acc)->
+					[list_to_tuple(lists:reverse([ element(J,Rw) || Rw <- Rows]))|Acc]
+					end,[],lists:seq(1,N)),
+	{list_to_tuple(lists:reverse(Ls)),Var+1}.
+
+	
+
+
 
 init_state() ->
 	{1,
@@ -114,11 +128,11 @@ t() ->
 	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e}},
 
 	case St=board_to_position(Board) == {4,6,Pos={
-												 {e,w,e,e,e,e,e,b},
-												 {e,e,e,e,e,e,b,e},
-												 {b,e,e,w,e,e,e,e}}} of
+											 	{e,w,e,e,e,e,e,b},
+											 	{e,e,e,e,e,e,b,e},
+											 	{b,e,e,w,e,e,e,e}}} of
 		true -> ok;
 		_ -> error(St)
 	end,
-	get_key(Pos)={[3,7],[5,9,9]}.
+	get_key(Pos).
 
