@@ -22,7 +22,7 @@ start(_StartType, _StartArgs) ->
       {'_', [
         {"/", cowboy_static, {file, "priv/index.html"}},
         {"/static/[...]", cowboy_static, {dir, "priv/static"}},
-        {"/websocket", ws_handler, []}
+        {"/board/:board", ws_handler, []}
       ]}
     ]),
     {ok, _} = cowboy:start_http(http, 100, [{port, 8080}],

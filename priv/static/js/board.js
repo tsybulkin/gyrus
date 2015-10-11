@@ -69,35 +69,27 @@ function Board(parent, cellSize, active) {
   }
 }
 
-var b = new Board(document.getElementById('left_box'), 10);
+function BoardConnection(board, boardSocketUrl) {
+  var state = 'init';
 
-b.addChecker(1,1,'black');
-b.addChecker(2,2,'white');
-b.addChecker(3,3,'black');
-b.addChecker(3,2,'black');
-b.addChecker(1,2,'black');
+  function handle_message(msg) {
+    console.log(msg);
+  }
 
-b.addChecker(5,5,'white');
-b.addChecker(5,6,'black');
-b.addChecker(6,6,'black');
-b.addChecker(6,5,'black');
-b.addChecker(4,5,'white');
 
-b.addChecker(14,14,'white');
-b.addChecker(14,15,'black');
-b.addChecker(15,15,'black');
-b.addChecker(15,14,'black');
-b.addChecker(13,14,'white');
+  var ws = new WebSocket(boardSocketUrl);
+  ws.onopen = function() {
+    state = 'connected';
+    // ws.send(JSON.stringify({'q': 'hello'}));
+    ws.send(JSON.stringify('init'));
+  };
+  ws.onmessage = function(e) {
+    handle_message(e.data);
+  };
+  ws.onerror = function(err) {
+    alert('ws error: ' + err);
+  };
 
-b = new Board(document.body, 40, true);
-b.addChecker(1,1,'black');
-b.addChecker(2,2,'white');
-b.addChecker(3,3,'black');
-b.addChecker(3,2,'black');
-b.addChecker(1,2,'black');
 
-b.addChecker(14,14,'white');
-b.addChecker(14,15,'black');
-b.addChecker(15,15,'black');
-b.addChecker(15,14,'black');
-b.addChecker(13,14,'white');
+}
+
