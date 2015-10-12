@@ -1,0 +1,30 @@
+.board {
+  margin-left: 50px;
+  margin-top: 50px;
+  position: relative;
+  display: inline-block;    // div not larger than its contents
+}
+
+.board table {
+    background-color: rgb(251,234,173);
+    table-layout: fixed;
+}
+
+.board td {
+    border: 1px solid rgb(167,169,172);
+}
+
+.circle {
+  border-radius: 50%;
+}
+.white {
+  background-color: white;
+  border: 2px solid rgb(122,64,152);
+}
+.black {
+  background-color: rgb(114,76,140);
+  border: 2px solid rgb(63,33,75)
+}
+.next {
+  border: 2px dashed red;
+}
