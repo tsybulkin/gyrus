@@ -8,7 +8,8 @@
 -export([init_state/0, t/0,
 		board_to_position/1,
 		get_key/1,
-		next_variant/2
+		next_variant/2,
+		back_transform/4
 		]).
 
 
@@ -72,7 +73,7 @@ get_key(Position) ->
 
 
 
-next_variant(Position,4) -> {list_to_tuple(lists:reverse(tuple_to_list(Position))),5}; % reflection
+next_variant(Position,Var) when Var =:= 4; Var=:= -1 -> reflect(Position,Var); % reflection
 next_variant(Position,Var) -> % rotation
 	Rows = tuple_to_list(Position),
 	[Row|_] = Rows, 
@@ -83,6 +84,24 @@ next_variant(Position,Var) -> % rotation
 	{list_to_tuple(lists:reverse(Ls)),Var+1}.
 
 	
+
+reflect(Position,Var) -> {list_to_tuple(lists:reverse(tuple_to_list(Position))),-Var}.
+
+
+
+back_transform(X,Y,Variant,Position) ->
+	Cy = size(Position) + 1,
+	Cx = size(element(1,Position)) + 1,
+	case Variant < 0 of
+		true -> back_transform(X,Cy-Y,-Variant,Cx,Cy);
+		false-> back_transform(X,Y,Variant,Cx,Cy)
+	end.
+
+back_transform(X,Y,1,_Cx,_Cy) -> {X,Y};
+back_transform(X,Y,2,Cx,_Cy) -> {Y, Cx-X};
+back_transform(X,Y,3,Cx,Cy) -> {Cx-X,Cy-Y};
+back_transform(X,Y,4,_Cx,Cy) -> {Cy-Y,X}.
+
 
 
 
