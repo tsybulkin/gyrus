@@ -2,156 +2,165 @@
 <html>
 <head>
 
-  <meta charset="utf-8" />
-  <title>Board</title>
+    <meta charset="utf-8"/>
+    <title>Board</title>
 
-  <link rel="stylesheet" href="static/css/normalize.css">
-  <link rel="stylesheet" href="static/css/pure-min.css">
-  <link rel="stylesheet" href="static/css/board.css">
+    <link rel="stylesheet" href="static/css/normalize.css">
+    <link rel="stylesheet" href="static/css/pure-min.css">
+    <link rel="stylesheet" href="static/css/board.css">
 
-  <style type="text/css">
+    <style type="text/css">
 
-  html,body {
-    height:100%;
-}
+        html,body {
+        height:100%;
+        }
 
-  	.main {
-  		width: 85%;
-  		margin: 0 auto;
-  		font-family: sans-serif;
-  		font-size: 20px;
-  	}
+        .main {
+        width: 85%;
+        margin: 0 auto;
+        font-family: sans-serif;
+        font-size: 20px;
+        }
 
-  	.main .h {
-  		color: rgb(152,13,10);
-  		text-align: center;
-  	}
-  	.main h1 {
-  		font-size: 6vw;
-  	}
-  	.main h3 {
-  		font-size: 4vw;
-  	}
+        .main .h {
+        color: rgb(152,13,10);
+        text-align: center;
+        }
+        .main h1 {
+        font-size: 6vw;
+        }
+        .main h3 {
+        font-size: 4vw;
+        }
 
-  	.main p {
-  		text-indent: 1.5em;
-  	}
+        .main p {
+        text-indent: 1.5em;
+        }
 
-  	.main div.text {
-  		/*margin: 10px 20px 15px 20px;*/
-  	}
+        .main div.text {
+        /*margin: 10px 20px 15px 20px;*/
+        }
 
-  	.main .box {
-  		margin: 5px;
-  		padding: 20px;
-  		background: linear-gradient(rgb(250,250,250), rgb(191,191,191));
-  		border-radius: 5px;
-  		height: 100%;
-  	}
+        .main .box {
+        margin: 5px;
+        padding: 20px;
+        background: linear-gradient(rgb(250,250,250), rgb(191,191,191));
+        border-radius: 5px;
+        height: 100%;
+        }
 
-	.button-easy,
-	.button-average,
-	.button-hard {
-		color: white;
-		border-radius: 10px;
-		text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
-		font-size: 25px;
-		width: 80%;
-		height: 70px;
-		margin-bottom: 15px;
-		display: block;
-	}
-	.button-easy {
-		background: rgb(48, 152, 80); 
-	}
-	.button-average {
-		background: rgb(197, 150, 55); 
-	}
-	.button-hard {
-		background: rgb(193, 89, 34); 
-	}
+        .button-easy,
+        .button-average,
+        .button-hard {
+        color: white;
+        border-radius: 10px;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+        font-size: 25px;
+        width: 80%;
+        height: 70px;
+        margin-bottom: 15px;
+        display: block;
+        }
+        .button-easy {
+        background: rgb(48, 152, 80);
+        }
+        .button-average {
+        background: rgb(197, 150, 55);
+        }
+        .button-hard {
+        background: rgb(193, 89, 34);
+        }
 
-  </style>
+    </style>
 
 </head>
 
 <body>
 
-	<div class="pure-g main">
-	    <div class="pure-u-1-3">
-		    <div class="box" id="left_box">
-		    	<h3 class="h">statistics</h3>
+<div class="pure-g main">
+    <div class="pure-u-1-3">
+        <div class="box" id="left_box">
+            <h3 class="h">statistics</h3>
 
-		    	<div class='text'>games played  </div>
-		    	<div class='text'>by bot: <span>0</span></div>
-		    	<br />
-		    	<div class='text'>agains people:</div>
-		    	<div class='text'>Win: <span>0</span></div>
-		    	<div class='text'>Lost: <span>0</span></div>
-		    	<div class='text'>Draw: <span>0</span></div>
-		    </div>
+            <div class='text'>games played  </div>
+            <div class='text'>by bot: <span>0</span></div>
+            <br/>
 
-	    </div>
-	    <div class="pure-u-1-3">
-		    <div class="box">
-		    	<h1 class="h">gomoku</h1>
-		    	<p>Play free-style Gomoku or five- in-a-row board game against AI-bot or watch how it plays against other people.</p>
-		    	<p>During each game the Bot learns new tricks, which it will use against you next time.</p>
-		    	<p>Enjoy...</p>
-		    </div>
-	    </div>
-	    <div class="pure-u-1-3">
-		    <div class="box">
-		    	<h3 class="h">new game</h3>
-		    	<center>
-		    		<button class="button-easy pure-button">easy</button>
-		    		<button class="button-average pure-button">average</button>
-		    		<button class="button-hard pure-button">hard</button>
-		    	</center>
-		    </div>
-	    </div>
-	</div>
+            <div class='text'>agains people:</div>
+            <div class='text'>Win: <span>0</span></div>
+            <div class='text'>Lost: <span>0</span></div>
+            <div class='text'>Draw: <span>0</span></div>
+        </div>
 
-  <script type="text/javascript" src="static/js/underscore-min.js"></script>
-  <script type="text/javascript" src="static/js/board.js"></script>
-  <script type="text/javascript">
-	var b = new Board(document.getElementById('left_box'), 10);
+    </div>
+    <div class="pure-u-1-3">
+        <div class="box">
+            <h1 class="h">gomoku</h1>
 
-	b.addChecker(1,1,'black');
-	b.addChecker(2,2,'white');
-	b.addChecker(3,3,'black');
-	b.addChecker(3,2,'black');
-	b.addChecker(1,2,'black');
+            <p>Play free-style Gomoku or five- in-a-row board game against AI-bot or watch how it plays against other
+                people.</p>
 
-	b.addChecker(5,5,'white');
-	b.addChecker(5,6,'black');
-	b.addChecker(6,6,'black');
-	b.addChecker(6,5,'black');
-	b.addChecker(4,5,'white');
+            <p>During each game the Bot learns new tricks, which it will use against you next time.</p>
 
-	b.addChecker(14,14,'white');
-	b.addChecker(14,15,'black');
-	b.addChecker(15,15,'black');
-	b.addChecker(15,14,'black');
-	b.addChecker(13,14,'white');
+            <p>Enjoy...</p>
+        </div>
+    </div>
+    <div class="pure-u-1-3">
+        <div class="box">
+            <h3 class="h">new game</h3>
+            <center>
+                <button class="button-easy pure-button">easy</button>
+                <button class="button-average pure-button">average</button>
+                <button class="button-hard pure-button">hard</button>
+            </center>
+        </div>
+    </div>
+</div>
 
-	b = new Board(document.body, 40, true);
-	b.addChecker(1,1,'black');
-	b.addChecker(2,2,'white');
-	b.addChecker(3,3,'black');
-	b.addChecker(3,2,'black');
-	b.addChecker(1,2,'black');
+<script type="text/javascript" src="static/js/underscore-min.js"></script>
+<script type="text/javascript" src="static/js/board.js"></script>
+<script type="text/javascript">
+    var b = new Board(document.getElementById('left_box'), 10);
 
-	b.addChecker(14,14,'white');
-	b.addChecker(14,15,'black');
-	b.addChecker(15,15,'black');
-	b.addChecker(15,14,'black');
-	b.addChecker(13,14,'white');
+    b.addChecker(1,1,'black');
+    b.addChecker(2,2,'white');
+    b.addChecker(3,3,'black');
+    b.addChecker(3,2,'black');
+    b.addChecker(1,2,'black');
+
+    b.addChecker(5,5,'white');
+    b.addChecker(5,6,'black');
+    b.addChecker(6,6,'black');
+    b.addChecker(6,5,'black');
+    b.addChecker(4,5,'white');
+
+    b.addChecker(14,14,'white');
+    b.addChecker(14,15,'black');
+    b.addChecker(15,15,'black');
+    b.addChecker(15,14,'black');
+    b.addChecker(13,14,'white');
+
+    var c = new BoardConnection(b, 'ws:/localhost:8080/board/0');
+
+    b = new Board(document.body, 40, true);
+    b.addChecker(1,1,'black');
+    b.addChecker(2,2,'white');
+    b.addChecker(3,3,'black');
+    b.addChecker(3,2,'black');
+    b.addChecker(1,2,'black');
+
+    b.addChecker(14,14,'white');
+    b.addChecker(14,15,'black');
+    b.addChecker(15,15,'black');
+    b.addChecker(15,14,'black');
+    b.addChecker(13,14,'white');
 
 
-	var c = new BoardConnection(b, 'ws:/localhost:8080/board/0')
+    <!--c = new BoardConnection(b, 'ws:/localhost:8080/board/new_game');-->
 
-  </script>
+
+
+</script>
 
 </body>
 

@@ -81,7 +81,7 @@ function BoardConnection(board, boardSocketUrl) {
   ws.onopen = function() {
     state = 'connected';
     // ws.send(JSON.stringify({'q': 'hello'}));
-    ws.send(JSON.stringify('init'));
+    // ws.send(JSON.stringify('init'));
   };
   ws.onmessage = function(e) {
     handle_message(e.data);
