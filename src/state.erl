@@ -5,7 +5,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -module(state).
--export([init_state/0, t/0,
+-export([init_state/0, init_state1/0, t/0,
 		board_to_position/1,
 		get_key/1,
 		next_variant/2,
@@ -115,6 +115,25 @@ init_state() ->
 	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
 	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
 	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
+	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
+	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
+	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
+	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
+	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
+	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
+	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e}}
+	 }.
+
+init_state1() ->
+	{2,
+	{{e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
+	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
+	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e}, 
+	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
+	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
+	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
+	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
+	 {e,e,e,e,e,e,e,b,e,e,e,e,e,e,e},
 	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
 	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
 	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
