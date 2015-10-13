@@ -6,7 +6,8 @@
 
 -module(game).
 -export([game_manager/2,
-		start_new_game/3
+		start_new_game/3,
+		color/1
 		]).
 
 -define(CONCURRENT_GAMES_LIMIT, 11).
