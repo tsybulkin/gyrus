@@ -6,7 +6,7 @@
 
 -module(game).
 -export([game_manager/2,
-		start_new_game/3,
+		start_new_game/4,
 		color/1
 		]).
 
@@ -24,10 +24,10 @@ game_manager(Schedule,WS,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone) ->
 					GS = self(),
 					case Color of
 						blacks ->
-							Game_id = spawn(?MODULE,start_new_game,[Schedule,GS,bot,human]),
+							Game_id = spawn(?MODULE,start_new_game,[Schedule,GS,Level,whites]),
 							WS ! {start_new_game, ID, state:init_state1(), blacks};
 						whites ->
-							Game_id = spawn(?MODULE,start_new_game,[Schedule,GS,human,bot]),
+							Game_id = spawn(?MODULE,start_new_game,[Schedule,GS,Level,blacks]),
 							WS ! {start_new_game, ID, state:init_state(), whites}
 					end,
 					game_manager(Schedule,WS,[Game_id|CurrGames],CurrPlayersNbr+1,Won,Draw,Lost,GamesDone);
@@ -96,27 +96,28 @@ game_manager(Schedule,WS,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone) ->
 
 
 
-start_new_game(Gyri,GS,blacks) -> %% run Agent vs. Bot
-	% run game
+start_new_game(Gyri,GS,Level,blacks) -> %% run Agent vs. Bot
+	% bot plays for blacks
 	State = state:init_state(),
-	run_game(Gyri,GS,State,blacks);
-start_new_game(Gyri,GS,whites) -> %% run Agent vs. Bot
-	% run game
+	run_game(Gyri,GS,Level,State,blacks);
+start_new_game(Gyri,GS,Level,whites) -> %% run Agent vs. Bot
+	% bot plays for whites
 	State = state:init_state1(),
-	run_game(Gyri,GS,State,whites).
+	run_game(Gyri,GS,Level,State,whites).
 
 
 
-run_game(Gyri,GS,{Turn,_Board}=State,Color) -> 
+run_game(Gyri,GS,Level,{Turn,_Board}=State,Color) -> 
 	case color(Turn) =:= Color of
 		true -> % your move
-			Move = bot:get_move(Gyri,State),
+			%Move = bot:get_move(Gyri,Level,State),
+			Move = rand:rand(State),
 			case change_state(State,Move) of
 				blacks_won -> GS ! {game_over, self(), Move, man_lost};
 				whites_won -> GS ! {game_over, self(), Move, man_lost};
 				draw -> GS ! {game_over, self(), Move, draw};
 				NextState -> GS ! {bot_move, self(), Move},
-					run_game(Gyri,GS,NextState,Color)
+					run_game(Gyri,GS,Level,NextState,Color)
 			end;
 		false->  % Opponent's move
 			receive
@@ -126,7 +127,7 @@ run_game(Gyri,GS,{Turn,_Board}=State,Color) ->
 						blacks_won -> GS ! {game_over, self(), man_won};
 						whites_won -> GS ! {game_over, self(), man_won};
 						draw -> GS ! {game_over, self(), draw};
-						NextState -> run_game(Gyri,GS,NextState,Color)
+						NextState -> run_game(Gyri,GS,Level,NextState,Color)
 					end
 			end
 	end.

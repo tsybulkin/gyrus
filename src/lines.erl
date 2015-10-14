@@ -18,7 +18,7 @@
 
 check_five(illegal_move) -> illegal_move;
 check_five({Turn,Board}) -> 
-	case Turn of
+	case game:color(Turn) of
 		blacks -> check_five(board, w,Board);
 		whites -> check_five(board, b,Board)
 	end.
