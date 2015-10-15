@@ -68,7 +68,9 @@ get_good_moves(Rated_moves,Own,Opp,[{{X1,Y1},{X2,Y2},Stones}|Lines]) ->
 	get_good_moves(Rated_moves1,Own,Opp,Lines);
 get_good_moves([],_,_,[]) -> [];
 get_good_moves(Rated_moves,_,_,[]) ->
-	pick_best(lists:sort(fun({_,A},{_,B})-> A<B end,Rated_moves),0.4*lists:max([ Rate || {_,Rate} <- Rated_moves ])).
+	Thr = 0.3*lists:max([ Rate || {_,Rate} <- Rated_moves ]),
+	Sorted = lists:sort(fun({_,A},{_,B})-> A<B end,Rated_moves),
+	pick_best(lists:filter(fun({_,R})-> R>=Thr end,Sorted),Thr+1).
 
 	
 get_good_moves(Rated_moves,Own,Opp,{X1,Y1},{X2,Y2},Stones) ->
@@ -84,12 +86,12 @@ get_good_moves(Rated_moves,Own,Opp,{X1,Y1},{X2,Y2},Stones) ->
 				end, Rated_moves, rate([],Own,Opp,Stones,1)).
 
 
-pick_best(Ls,_Thr) when length(Ls)=<7 -> [XY ||{XY,_} <- Ls];
+pick_best(Ls,_Thr) when length(Ls)=<11 -> [XY ||{XY,_} <- Ls];
 pick_best(Ls,Thr) ->
 	Ls1 = lists:filter(fun({_,X})-> X>Thr end, Ls),
 	if
-		length(Ls1)>7 -> pick_best(Ls,Thr+1);
-		length(Ls1)<3 -> [XY ||{XY,_} <- Ls];
+		length(Ls1)>11 -> pick_best(Ls1,Thr+1);
+		length(Ls1)<5 -> [XY ||{XY,_} <- Ls];
 		true -> [XY ||{XY,_} <- Ls1]
 	end.
 

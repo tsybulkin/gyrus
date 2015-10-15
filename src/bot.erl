@@ -16,15 +16,16 @@ get_move(Gyri,Level,State) ->
 			%io:format("One move selected~n"), 
 			Move;
 		[_|_]=Moves ->
-			Scores = monte_carlo(State,Moves,episodes_nbr(Level) div length(Moves)),	
+			N = episodes_nbr(Level),
+			Scores = monte_carlo(State,Moves, N div length(Moves)),	
 			% Scores = eflame:apply(?MODULE,monte_carlo,[State,Moves,?NBR_EPISODES div length(Moves)]),	
 			io:format("~nScores: ~p~n",[Scores]),
 
 			Best_moves = lists:sublist([XY || {_,XY}<-Scores],3),
-			Refined = monte_carlo(State,Best_moves,90 div length(Best_moves)),	
+			Refined = monte_carlo(State,Best_moves, N div length(Best_moves)),	
 			io:format("~nRefined: ~p~n",[Refined]),
 
-			get_softmax_policy(State,[ XY || {_,XY}<-Refined],true)
+			[{_,Move}|_] = Refined, Move
 	end.
 
 
@@ -53,7 +54,7 @@ run_episode(State,Depth,Move) ->
 		draw -> 0;
 		Next_state -> 
 			learn(State,Move,Next_state),
-			run_episode(Next_state,Depth-1,get_policy(Next_state,false))
+			run_episode(Next_state,Depth-1,get_policy(Next_state))
 	end.
 
 
@@ -65,27 +66,55 @@ learn({Turn,Board}=State,Move,{_,Board1}=Next_state) ->
 	
 	Gyrus1 = list_to_atom("gyr"++integer_to_list(Turn)),
 	Gyrus2 = list_to_atom("gyr"++integer_to_list(Turn+1)).
+	%% NOT FINISHED
 
 
 
-
-get_policy(State,Print) ->
-	Moves = moves:get_selected_moves(State),
-	case get_state_value_action(State,Moves,Print) of
-		{0,_} -> get_softmax_policy(State, Moves,Print);
-		{_,Move} -> Move
+get_policy(State) ->
+	case get_best_worst_state_moves(State) of
+		no_policy -> moves:get_selected_moves(State);
+		{worst_moves,Worst_moves} -> 
+			Moves = moves:get_selected_moves(State),
+			case lists:filter(fun(M)-> lists:member(M,Worst_moves) end, Moves) of
+				[] -> io:format("NO GOOD MOVES~n"), rand:pick_randomly(Moves);
+				Good_moves -> rand:pick_randomly(Good_moves)
+			end;
+		{best_moves,Best_moves} -> rand:pick_randomly(Best_moves)
 	end.
 
 
 
+get_best_worst_state_moves({Turn,Board}) ->
+	{X0,Y0,Position} = state:board_to_position(Board),
+	Key = state:get_key(Position),
+	Gyrus = list_to_atom("gyr"++integer_to_list(Turn)),
+	case ets:lookup(Gyrus,Key) of
+		[] -> no_policy;
+		Values -> 
+			case match_position(Position,1,Values) of
+				no_match -> no_policy;
+				{Type,Moves,Variant} -> 
+					case state:filter_legal(Moves,X0,Y0,Variant,Position) of 
+						[] -> no_policy;
+						Filtered -> {Type,Filtered}
+					end
+			end
+	end.
+	
 
-get_softmax_policy(State,[M|Moves],Print) -> get_softmax_policy(State,[M|Moves],Print,M).
-get_softmax_policy(State,[M|Moves],Print,FMove) ->
-	case rand:flip_coin(0.8) of
-		false -> M;
-		_ -> get_softmax_policy(State,Moves,Print,FMove)
-	end;
-get_softmax_policy(_,[],_,FMove) -> FMove.
+
+match_position(_Position,-1,_Values) -> no_match;
+match_position(Position,Variant,Values) ->
+	case lists:keyfind(Position,1,Values) of
+		false -> 
+			{Position1,Next_var} = state:next_variant(Position,Variant),
+			match_position(Position1,Next_var,Values);
+
+		{_,[],Worst} -> {worst_moves,Worst,Variant};
+		{_,Best,_} -> {best_moves,Best,Variant}
+	end.
+
+
 
 
 
