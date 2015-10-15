@@ -16,9 +16,8 @@
 -define(CONCURRENT_GAMES_LIMIT, 11).
 
 start_link() ->
-	Schedule = [],
-	init_gyri(),
-	Pid = spawn_link(?MODULE, game_manager, [Schedule,[],0,0,0,0,0]),
+	MaxGyrus = gyri:init_gyri(),
+	Pid = spawn_link(?MODULE, game_manager, [MaxGyrus,[],0,0,0,0,0]),
 	true = register(game_manager, Pid),
 	{ok, Pid}.
 
@@ -26,9 +25,9 @@ game_manager_call(Request) ->
 	game_manager ! Request,
 	receive Response -> Response end.
 
-game_manager(Schedule) -> game_manager(Schedule,[],0,0,0,0,0).
+game_manager(MaxGyrus) -> game_manager(MaxGyrus,[],0,0,0,0,0).
 
-game_manager(Schedule,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone) ->
+game_manager(MaxGyrus,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone) ->
 	receive
 		{new_game_request, WS, Color, Level} ->
 			io:format("~p~n", [{new_game_request, WS, Color, Level}]),
@@ -37,17 +36,17 @@ game_manager(Schedule,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone) ->
 					GS = self(),
 					case Color of
 						blacks ->
-							Game_id = spawn(?MODULE,start_new_game,[Schedule,GS,Level,whites,WS]),
+							Game_id = spawn(?MODULE,start_new_game,[MaxGyrus,GS,Level,whites,WS]),
 							WS ! {start_new_game, state:init_state1(), blacks, Game_id};
 						whites ->
-							Game_id = spawn(?MODULE,start_new_game,[Schedule,GS,Level,blacks,WS]),
+							Game_id = spawn(?MODULE,start_new_game,[MaxGyrus,GS,Level,blacks,WS]),
 							WS ! {start_new_game, state:init_state(), whites, Game_id}
 					end,
-					game_manager(Schedule,[Game_id|CurrGames],CurrPlayersNbr+1,Won,Draw,Lost,GamesDone);
+					game_manager(MaxGyrus,[Game_id|CurrGames],CurrPlayersNbr+1,Won,Draw,Lost,GamesDone);
 				
 				false ->
 					WS ! too_many_players,
-					game_manager(Schedule,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone)
+					game_manager(MaxGyrus,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone)
 			end;
 
 		{player_move, WS, Game, Move} ->
@@ -56,7 +55,7 @@ game_manager(Schedule,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone) ->
 
 				false -> WS ! {game_not_exists, Game}
 			end,
-			game_manager(Schedule,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone);
+			game_manager(MaxGyrus,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone);
 
 		{bot_move, WS, Game, Move} ->
 			case lists:member(Game, CurrGames) of
@@ -64,37 +63,39 @@ game_manager(Schedule,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone) ->
 
 				false -> Game ! quit
 			end,
-			game_manager(Schedule,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone);
+			game_manager(MaxGyrus,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone);
 
 		{connection_closed, WS, Game} ->
 			CurrGames1 = lists:delete(Game,CurrGames),
 			Game ! quit,
-			game_manager(Schedule,CurrGames1,CurrPlayersNbr-1,Won+1,Draw,Lost,GamesDone+1);
+			game_manager(MaxGyrus,CurrGames1,CurrPlayersNbr-1,Won+1,Draw,Lost,GamesDone+1);
 
 		
 		{game_over,WS,Game,man_won} ->
 			WS ! {game_over, man_won},
+			gyri:save_gyri(),
 			CurrGames1 = lists:delete(Game,CurrGames),
-			game_manager(Schedule,CurrGames1,CurrPlayersNbr-1,Won,Draw,Lost+1,GamesDone+1);
+			game_manager(MaxGyrus,CurrGames1,CurrPlayersNbr-1,Won,Draw,Lost+1,GamesDone+1);
 		
 		{game_over,WS,Game,draw} ->
 			WS ! {game_over, draw},
 			CurrGames1 = lists:delete(Game,CurrGames),
-			game_manager(Schedule,CurrGames1,CurrPlayersNbr-1,Won,Draw+1,Lost,GamesDone+1);
+			game_manager(MaxGyrus,CurrGames1,CurrPlayersNbr-1,Won,Draw+1,Lost,GamesDone+1);
 
 		{game_over,WS,Game,Last_move,man_lost} ->
 			WS ! {game_over, Last_move, man_lost},
+			gyri:save_gyri(),
 			CurrGames1 = lists:delete(Game,CurrGames),
-			game_manager(Schedule,CurrGames1,CurrPlayersNbr-1,Won+1,Draw,Lost,GamesDone+1);
+			game_manager(MaxGyrus,CurrGames1,CurrPlayersNbr-1,Won+1,Draw,Lost,GamesDone+1);
 			
 		{game_over,WS,Game,Last_move,draw} ->
 			WS ! {game_over, Game, Last_move, draw},
 			CurrGames1 = lists:delete(Game,CurrGames),
-			game_manager(Schedule,CurrGames1,CurrPlayersNbr-1,Won,Draw+1,Lost,GamesDone+1);
+			game_manager(MaxGyrus,CurrGames1,CurrPlayersNbr-1,Won,Draw+1,Lost,GamesDone+1);
 		
 		{game_over,WS,Game,_Last_move,bot_game} ->
 			CurrGames1 = lists:delete(Game,CurrGames),
-			game_manager(Schedule,CurrGames1,CurrPlayersNbr-2,Won,Draw,Lost,GamesDone+1);
+			game_manager(MaxGyrus,CurrGames1,CurrPlayersNbr-2,Won,Draw,Lost,GamesDone+1);
 
 		%% TODO: delete this
 		Err -> throw(Err)
