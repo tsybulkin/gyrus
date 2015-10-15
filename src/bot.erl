@@ -90,10 +90,32 @@ get_best_worst_state_moves({Turn,Board}) ->
 	Gyrus = list_to_atom("gyr"++integer_to_list(Turn)),
 	case ets:lookup(Gyrus,Key) of
 		[] -> no_policy;
-		Values -> {worst_moves,[]}
+		Values -> 
+			case match_position(Position,1,Values) of
+				no_match -> no_policy;
+				{Type,Moves,Variant} -> 
+					case state:filter_legal(Moves,X0,Y0,Variant,Position) of 
+						[] -> no_policy;
+						Filtered -> {Type,Filtered}
+					end
+			end
 	end.
 	
-	
+
+
+match_position(_Position,-1,_Values) -> no_match;
+match_position(Position,Variant,Values) ->
+	case lists:keyfind(Position,1,Values) of
+		false -> 
+			{Position1,Next_var} = state:next_variant(Position,Variant),
+			match_position(Position1,Next_var,Values);
+
+		{_,[],Worst} -> {worst_moves,Worst,Variant};
+		{_,Best,_} -> {best_moves,Best,Variant}
+	end.
+
+
+
 
 
 
