@@ -123,6 +123,3 @@ episodes_nbr(easy)  -> ?NBR_EPISODES;
 episodes_nbr(medium)-> ?NBR_EPISODES*3;
 episodes_nbr(hard)  -> ?NBR_EPISODES*10.
 
-
-get_state_value_action(State,Moves,Print) ->
-	pass.
