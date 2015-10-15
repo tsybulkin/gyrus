@@ -17,6 +17,7 @@
 
 start_link() ->
 	Schedule = [],
+	init_gyri(),
 	Pid = spawn_link(?MODULE, game_manager, [Schedule,[],0,0,0,0,0]),
 	true = register(game_manager, Pid),
 	{ok, Pid}.
