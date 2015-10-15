@@ -5,7 +5,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -module(bot).
--export([get_move/3]).
+-export([get_move/3, gyrus_name/1
+		]).
 
 -define(NBR_EPISODES,600).
 
@@ -49,24 +50,31 @@ monte_carlo(MaxGyrus,{Turn,_}=State,Moves,Simulation_Nbr) ->
 run_episode(_MaxGyrus,_State,0,_Move) -> 0;
 run_episode(MaxGyrus,{Turn,_}=State,Depth,Move) ->
 	case game:change_state(State,Move) of
-		blacks_won -> learn(State,Move,blacks_won), -1;
-		whites_won -> learn(State,Move,whites_won), 1;
+		blacks_won -> learn(State,Move,-1),-1;
+		whites_won -> learn(State,Move, 1), 1;
 		draw -> 0;
 		Next_state -> 
 			if Turn =:= MaxGyrus -> gyri:new_gyrus(Turn+1); true -> ok end,
-			learn(State,Move,Next_state),
+			Gyrus2 = gyrus_name(Turn+1),
+			case get_state_value(Next_state) of
+				0 -> ok;
+				V -> learn(State,Move,V)
+			end,
 			run_episode(MaxGyrus+1,Next_state,Depth-1,get_policy(Next_state))
 	end.
 
 
-%% ets table must be created as [named_table,bag]
 
-learn({Turn,Board}=State,Move,{_,Board1}=Next_state) ->
-	Position = state:board_to_position(Board),
-	Key = state:get_key(Position),
-	
-	Gyrus1 = list_to_atom("gyr"++integer_to_list(Turn)),
-	Gyrus2 = list_to_atom("gyr"++integer_to_list(Turn+1)).
+get_state_value(State) -> 0.
+% NOT FINISHED
+
+
+%% ets table must be created as [named_table,bag]
+learn({Turn,Board}=State,Move,Next_state_value) ->
+	{_,_,Position} = state:board_to_position(Board),
+	Key = state:get_key(Position),	
+	Gyrus1 = gyrus_name(Turn),
+	io:format("Position: ~p~nMove: ~p  Value: ~p~n",[Position,Move,Next_state_value]).
 	%% NOT FINISHED
 
 
@@ -88,7 +96,7 @@ get_policy(State) ->
 get_best_worst_state_moves({Turn,Board}) ->
 	{X0,Y0,Position} = state:board_to_position(Board),
 	Key = state:get_key(Position),
-	Gyrus = list_to_atom("gyr"++integer_to_list(Turn)),
+	Gyrus = gyrus_name(Turn),
 	case ets:lookup(Gyrus,Key) of
 		[] -> no_policy;
 		Values -> 
@@ -117,6 +125,7 @@ match_position(Position,Variant,Values) ->
 
 
 
+gyrus_name(J) -> list_to_atom("gyrus"++integer_to_list(J)).
 
 
 

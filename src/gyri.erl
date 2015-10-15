@@ -30,4 +30,4 @@ save_gyri() ->
 
 
 
-new_gyrus(J) -> ets:new(list_to_atom("gyrus"++integer_to_list(J)),[named_table,bag]).
+new_gyrus(J) -> ets:new(bot:gyrus_name(J),[named_table,bag]).
