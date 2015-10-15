@@ -1,7 +1,10 @@
-function Board(parent, cellSize, active) {
+function Board(parent, cellSize, callback) {
 
+    var self = this;
   var size = 14;
   active = typeof active !== 'undefined' ? active : false;
+  // Mouse coordinates
+  var x = 0, y = 0;
 
   // create parent dom element
   var board = document.createElement('div');
@@ -28,68 +31,93 @@ function Board(parent, cellSize, active) {
 
   });
 
-  if (active) {
+    this.addChecker = function(x, y, color) {
+      var ch = document.createElement('div');
+      ch.className = 'circle ' + color;
+      ch.style.width = cellSize-4 + 'px';
+      ch.style.height = cellSize-4 + 'px';
+      ch.style.position = 'absolute';
+      var cell_size = cellSize;
+      var ch_size = cellSize;
+      ch.style.left = cell_size*(x-1) - ch_size/2 + x + 'px';
+      ch.style.bottom = cell_size*(y-1) - ch_size/2 + y + 'px';
+      this.div.appendChild(ch);
+    }
+
+  if (callback) {
     var ch = document.createElement('div');
     ch.className = 'circle next';
     ch.style.width = cellSize-4 + 'px';
     ch.style.height = cellSize-4 + 'px';
     ch.style.position = 'absolute';
-    // ch.style.visibility = "hidden"
     board.appendChild(ch);
     var next_checker = ch;
 
-    // table.onmouseenter = function() { next_checker.style.visibility = "visible"; }
-    // table.onmouseleave = function() { next_checker.style.visibility = "hidden"; }
-
-    function _handleMouse(event) {
-      // next_checker.style.visibility = "visible";
-
-      // var x = Math.round(event.layerX / (cellSize+1)) + 1;
-      // var y = 15 - Math.round(event.layerY / (cellSize+1));
+    function _handleMouseMove(event) {
+      x = Math.round(event.layerX / (cellSize+1)) + 1;
+      y = 15 - Math.round(event.layerY / (cellSize+1));
 
       next_checker.style.left = Math.round(event.layerX / (cellSize+1)) * (cellSize+1) - cellSize/2 + 1 + 'px';
-      next_checker.style.top = Math.round(event.layerY / (cellSize+1)) * (cellSize+1) - cellSize/2 - 1 + 'px';
+      next_checker.style.top = Math.round(event.layerY / (cellSize+1)) * (cellSize+1) - cellSize/2 + 'px';
 
     }
 
-    table.onmousemove = _handleMouse;
+    function _handleClick() {
+      // TODO: check if empty
+      callback(x,y,'white');
+    }
+
+    table.onmousemove = _handleMouseMove;
+    board.onclick = _handleClick;
   }
 
-  this.addChecker = function(x, y, color) {
-    var ch = document.createElement('div');
-    ch.className = 'circle ' + color;
-    ch.style.width = cellSize-4 + 'px';
-    ch.style.height = cellSize-4 + 'px';
-    ch.style.position = 'absolute';
-    var cell_size = cellSize;
-    var ch_size = cellSize;
-    ch.style.left = cell_size*(x-1) - ch_size/2 + x + 'px';
-    ch.style.bottom = cell_size*(y-1) - ch_size/2 + y + 'px';
-    this.div.appendChild(ch);
-  }
+
 }
 
-function BoardConnection(board, boardSocketUrl) {
+function BoardConnection(board, baseUrl, color, level) {
   var state = 'init';
+  var self = this;
+
+  this.send = function(obj) {
+    var json = JSON.stringify(obj);
+    self.ws.send(json);
+  }
 
   function handle_message(msg) {
     console.log(msg);
+    var action = msg[0];
+    if ('bot_move' == action) {
+        var x = msg[1];
+        var y = msg[2];
+        board.addChecker(x,y,'black');
+    }
+    else if('game_over' == action) {
+        if ('man_lost' == msg[1]) {
+            var x = msg[2];
+            var y = msg[3];
+            board.addChecker(x,y,'black');
+            alert("You lose!");
+        }
+        else if ('man_won' == msg[1]) {
+            alert("You won!");
+        }
+    }
+
   }
 
 
-  var ws = new WebSocket(boardSocketUrl);
+  var ws = new WebSocket(baseUrl + '/new_game/' + color + '/' + level);
   ws.onopen = function() {
     state = 'connected';
-    // ws.send(JSON.stringify({'q': 'hello'}));
-    // ws.send(JSON.stringify('init'));
   };
   ws.onmessage = function(e) {
-    handle_message(e.data);
+    var msg = JSON.parse(e.data);
+    handle_message(msg);
   };
   ws.onerror = function(err) {
     alert('ws error: ' + err);
   };
-
+  this.ws = ws;
 
 }
 

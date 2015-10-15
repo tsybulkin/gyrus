@@ -22,6 +22,7 @@ start(_StartType, _StartArgs) ->
       {'_', [
         {"/", cowboy_static, {file, "priv/index.html"}},
         {"/static/[...]", cowboy_static, {dir, "priv/static"}},
+        {"/new_game/:color/:level", ws_handler, []},
         {"/board/:board", ws_handler, []}
       ]}
     ]),

@@ -12,14 +12,21 @@
     <style type="text/css">
 
         html,body {
-        height:100%;
+            height:100%;
         }
 
+        .height_max,#main_view {
+            height:100%;
+        }
+
+
+
         .main {
-        width: 85%;
-        margin: 0 auto;
-        font-family: sans-serif;
-        font-size: 20px;
+            width: 85%;
+            margin: 0 auto;
+            padding: 0px;
+            font-family: sans-serif;
+            font-size: 20px;
         }
 
         .main .h {
@@ -42,16 +49,17 @@
         }
 
         .main .box {
-        margin: 5px;
-        padding: 20px;
-        background: linear-gradient(rgb(250,250,250), rgb(191,191,191));
-        border-radius: 5px;
-        height: 100%;
+            margin: 5px;
+            padding: 20px;
+            background: linear-gradient(rgb(250,250,250), rgb(191,191,191));
+            border-radius: 5px;
+            height:90%;
         }
 
         .button-easy,
         .button-average,
-        .button-hard {
+        .button-hard,
+        .button-move {
         color: white;
         border-radius: 10px;
         text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
@@ -61,7 +69,8 @@
         margin-bottom: 15px;
         display: block;
         }
-        .button-easy {
+        .button-easy,
+        .button-move{
         background: rgb(48, 152, 80);
         }
         .button-average {
@@ -71,92 +80,133 @@
         background: rgb(193, 89, 34);
         }
 
+        .hidden {
+            visibility: hidden;
+        }
+        .visible {
+            visibility: visible;
+        }
+
+        .close_game_button {
+            width: 48px;
+            height: 48px;
+            border: 0;
+
+            background: url(static/img/close.png);
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+        }
+
     </style>
 
 </head>
 
 <body>
 
-<div class="pure-g main">
-    <div class="pure-u-1-3">
-        <div class="box" id="left_box">
-            <h3 class="h">statistics</h3>
+<div id="main_view" class="hidden">
+    <div class="pure-g main height_max">
+        <div class="pure-u-1-3 height_max">
+            <div class="box" id="left_box">
+                <h3 class="h">statistics</h3>
 
-            <div class='text'>games played  </div>
-            <div class='text'>by bot: <span>0</span></div>
-            <br/>
+                <div class='text'>games played  </div>
+                <div class='text'>by bot: <span>0</span></div>
+                <br/>
 
-            <div class='text'>agains people:</div>
-            <div class='text'>Win: <span>0</span></div>
-            <div class='text'>Lost: <span>0</span></div>
-            <div class='text'>Draw: <span>0</span></div>
+                <div class='text'>agains people:</div>
+                <div class='text'>Win: <span>0</span></div>
+                <div class='text'>Lost: <span>0</span></div>
+                <div class='text'>Draw: <span>0</span></div>
+            </div>
+
         </div>
+        <div class="pure-u-1-3 height_max">
+            <div class="box">
+                <h1 class="h">gomoku</h1>
 
-    </div>
-    <div class="pure-u-1-3">
-        <div class="box">
-            <h1 class="h">gomoku</h1>
+                <p>Play free-style Gomoku or five- in-a-row board game against AI-bot or watch how it plays against other
+                    people.</p>
 
-            <p>Play free-style Gomoku or five- in-a-row board game against AI-bot or watch how it plays against other
-                people.</p>
+                <p>During each game the Bot learns new tricks, which it will use against you next time.</p>
 
-            <p>During each game the Bot learns new tricks, which it will use against you next time.</p>
-
-            <p>Enjoy...</p>
+                <p>Enjoy...</p>
+            </div>
         </div>
-    </div>
-    <div class="pure-u-1-3">
-        <div class="box">
-            <h3 class="h">new game</h3>
-            <center>
-                <button class="button-easy pure-button">easy</button>
-                <button class="button-average pure-button">average</button>
-                <button class="button-hard pure-button">hard</button>
-            </center>
+        <div class="pure-u-1-3 height_max">
+            <div class="box">
+                <h3 class="h">new game</h3>
+                <center>
+                    <button onclick="start_game(0)" class="button-easy pure-button">easy</button>
+                    <button onclick="start_game(1)" class="button-average pure-button">average</button>
+                    <button onclick="start_game(2)" class="button-hard pure-button">hard</button>
+                </center>
+            </div>
         </div>
     </div>
 </div>
 
+<div id="game_view" class="visible">
+
+    <button onclick="switch_views()" class="close_game_button"></button>
+    <div class="pure-g main height_max">
+        <div id="game_widget_container" class="pure-u-2-3 height_max">
+
+        </div>
+        <div class="pure-u-1-3 height_max">
+            <!--<button onclick="make_move()" class="button-move pure-button">make move</button>-->
+        </div>
+    </div>
+
+</div>
+
+
 <script type="text/javascript" src="static/js/underscore-min.js"></script>
 <script type="text/javascript" src="static/js/board.js"></script>
 <script type="text/javascript">
-    var b = new Board(document.getElementById('left_box'), 10);
 
-    b.addChecker(1,1,'black');
-    b.addChecker(2,2,'white');
-    b.addChecker(3,3,'black');
-    b.addChecker(3,2,'black');
-    b.addChecker(1,2,'black');
+    function start_game(level) {
+        switch_views();
+    }
 
-    b.addChecker(5,5,'white');
-    b.addChecker(5,6,'black');
-    b.addChecker(6,6,'black');
-    b.addChecker(6,5,'black');
-    b.addChecker(4,5,'white');
+    function switch_views() {
+        var main_view = document.getElementById('main_view');
+        var game_view = document.getElementById('game_view');
 
-    b.addChecker(14,14,'white');
-    b.addChecker(14,15,'black');
-    b.addChecker(15,15,'black');
-    b.addChecker(15,14,'black');
-    b.addChecker(13,14,'white');
+        var tmpClassName = main_view.className;
+        main_view.className = game_view.className;
+        game_view.className = tmpClassName;
+    }
 
-    var c = new BoardConnection(b, 'ws:/localhost:8080/board/0');
+    <!--var b = new Board(document.getElementById('left_box'), 10);-->
 
-    b = new Board(document.body, 40, true);
-    b.addChecker(1,1,'black');
-    b.addChecker(2,2,'white');
-    b.addChecker(3,3,'black');
-    b.addChecker(3,2,'black');
-    b.addChecker(1,2,'black');
+    <!--b.addChecker(1,1,'black');-->
+    <!--b.addChecker(2,2,'white');-->
+    <!--b.addChecker(3,3,'black');-->
+    <!--b.addChecker(3,2,'black');-->
+    <!--b.addChecker(1,2,'black');-->
 
-    b.addChecker(14,14,'white');
-    b.addChecker(14,15,'black');
-    b.addChecker(15,15,'black');
-    b.addChecker(15,14,'black');
-    b.addChecker(13,14,'white');
+    <!--b.addChecker(5,5,'white');-->
+    <!--b.addChecker(5,6,'black');-->
+    <!--b.addChecker(6,6,'black');-->
+    <!--b.addChecker(6,5,'black');-->
+    <!--b.addChecker(4,5,'white');-->
 
+    <!--b.addChecker(14,14,'white');-->
+    <!--b.addChecker(14,15,'black');-->
+    <!--b.addChecker(15,15,'black');-->
+    <!--b.addChecker(15,14,'black');-->
+    <!--b.addChecker(13,14,'white');-->
 
-    <!--c = new BoardConnection(b, 'ws:/localhost:8080/board/new_game');-->
+    <!--var c = new BoardConnection(b, 'ws:/localhost:8080/board/0');-->
+
+    var connection = undefined;
+
+    b = new Board(document.getElementById('game_widget_container'), 30, function(x,y,color) {
+      b.addChecker(x, y, 'white');
+      connection.send(['player_move',x,y]);
+    });
+
+    connection = new BoardConnection(b, 'ws:/localhost:8080', 'whites', 'easy');
 
 
 
