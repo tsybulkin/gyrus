@@ -88,16 +88,31 @@ learn({Turn,Board},{X,Y},Next_state_value) ->
 save_best_move(X,Y,Position,Key,Gyrus) ->
 	case ets:lookup(Gyrus,Key) of
 		[] -> ets:insert(Gyrus,{Key,Position,[{X,Y}],[]});
-		Values ->
-			io:format("Saving position:~p XY=~p into existing record: ~p~n",[Position,{X,Y},Values])
+		Values -> 
+			case get_variant_values(Position,1,Values) of
+				not_found -> ets:insert(Gyrus,{Key,Position,[{X,Y}],[]});
+				{Var,SymPosition,Best_moves,Worst_moves} ->
+					{X1,Y1} = state:transform(X,Y,Var,Position),
+					Values1 = lists:keyreplace(SymPosition,2,Values,{Key,SymPosition,[{X1,Y1}|Best_moves],Worst_moves}),
+					ets:delete(Gyrus,Key),
+					ets:insert(Gyrus,Values1)
+			end
 	end.
+
 
 
 save_worst_move(X,Y,Position,Key,Gyrus) ->
 	case ets:lookup(Gyrus,Key) of
 		[] -> ets:insert(Gyrus,{Key,Position,[],[{X,Y}]});
-		Values ->
-			io:format("Saving position: ~p into existing record: ~p~n",[Position,Values])
+		Values -> 
+			case get_variant_values(Position,1,Values) of
+				not_found -> ets:insert(Gyrus,{Key,Position,[{X,Y}],[]});
+				{Var,SymPosition,Best_moves,Worst_moves} ->
+					{X1,Y1} = state:transform(X,Y,Var,Position),
+					Values1 = lists:keyreplace(SymPosition,2,Values,{Key,SymPosition,Best_moves,[{X1,Y1}|Worst_moves]}),
+					ets:delete(Gyrus,Key),
+					ets:insert(Gyrus,Values1)
+			end
 	end.
 
 
@@ -145,6 +160,19 @@ match_position(Position,Variant,Values) ->
 		{_,Position,[],Worst} -> {worst_moves,Worst,Variant};
 		{_,Position,Best,_} -> {best_moves,Best,Variant}
 	end.
+
+
+
+get_variant_values(_Position,-1,_Values) -> not_found;
+get_variant_values(Position,Variant,Values) ->
+	case lists:keyfind(Position,2,Values) of
+		false -> 
+			{Position1,Next_var} = state:next_variant(Position,Variant),
+			get_variant_values(Position1,Next_var,Values);
+
+		{_,Position,Best_moves,Worst_moves} -> {Variant,Position,Best_moves,Worst_moves}
+	end.
+
 
 
 

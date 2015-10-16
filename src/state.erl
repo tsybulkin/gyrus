@@ -9,7 +9,7 @@
 		board_to_position/1,
 		get_key/1,
 		next_variant/2,
-		back_transform/4,
+		back_transform/4, transform/4,
 		filter_legal/6
 		]).
 
@@ -112,6 +112,20 @@ reflect(Position,Var) -> {list_to_tuple(lists:reverse(tuple_to_list(Position))),
 
 
 
+transform(X,Y,Variant,Position) ->
+	Cy = size(Position) + 1,
+	Cx = size(element(1,Position)) + 1,
+	case Variant < 0 of
+		true -> transform(X,Cy-Y,-Variant,Cx,Cy);
+		false-> transform(X,Y,Variant,Cx,Cy)
+	end.
+transform(X,Y,1,_Cx,_Cy) -> {X,Y};
+transform(X,Y,4,Cx,_Cy) -> {Y,Cx-X};
+transform(X,Y,3,Cx,Cy) -> {Cx-X,Cy-Y};
+transform(X,Y,2,_Cx,Cy) -> {Cy-Y, X}.
+
+
+
 back_transform(X,Y,Variant,Position) ->
 	Cy = size(Position) + 1,
 	Cx = size(element(1,Position)) + 1,
@@ -119,7 +133,6 @@ back_transform(X,Y,Variant,Position) ->
 		true -> back_transform(X,Cy-Y,-Variant,Cx,Cy);
 		false-> back_transform(X,Y,Variant,Cx,Cy)
 	end.
-
 back_transform(X,Y,1,_Cx,_Cy) -> {X,Y};
 back_transform(X,Y,2,Cx,_Cy) -> {Y,Cx-X};
 back_transform(X,Y,3,Cx,Cy) -> {Cx-X,Cy-Y};
