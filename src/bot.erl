@@ -5,12 +5,15 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -module(bot).
--export([get_move/3]).
+-export([get_move/2, gyrus_name/1
+		]).
 
--define(NBR_EPISODES,600).
+-define(NBR_EPISODES,300).
 
 
-get_move(Gyri,Level,State) ->
+get_move(_Level,{1,_Board}) -> {8,8};
+get_move(Level,{Turn,_}=State) ->
+	gyri:check_gyrus(Turn),
 	case moves:get_selected_moves(State) of
 		[Move] ->
 			%io:format("One move selected~n"), 
@@ -18,7 +21,6 @@ get_move(Gyri,Level,State) ->
 		[_|_]=Moves ->
 			N = episodes_nbr(Level),
 			Scores = monte_carlo(State,Moves, N div length(Moves)),	
-			% Scores = eflame:apply(?MODULE,monte_carlo,[State,Moves,?NBR_EPISODES div length(Moves)]),	
 			io:format("~nScores: ~p~n",[Scores]),
 
 			Best_moves = lists:sublist([XY || {_,XY}<-Scores],3),
@@ -47,32 +49,39 @@ monte_carlo({Turn,_}=State,Moves,Simulation_Nbr) ->
 
 
 run_episode(_State,0,_Move) -> 0;
-run_episode(State,Depth,Move) ->
+run_episode({Turn,_}=State,Depth,Move) ->
 	case game:change_state(State,Move) of
-		blacks_won -> learn(State,Move,blacks_won), -1;
-		whites_won -> learn(State,Move,whites_won), 1;
+		blacks_won -> learn(State,Move,-1),-1;
+		whites_won -> learn(State,Move, 1), 1;
 		draw -> 0;
 		Next_state -> 
-			learn(State,Move,Next_state),
+			gyri:check_gyrus(Turn+1),
+			case get_state_value(Next_state) of
+				0 -> ok;
+				V -> learn(State,Move,V)
+			end,
 			run_episode(Next_state,Depth-1,get_policy(Next_state))
 	end.
 
 
-%% ets table must be created as [named_table,bag]
 
-learn({Turn,Board}=State,Move,{_,Board1}=Next_state) ->
-	Position = state:board_to_position(Board),
-	Key = state:get_key(Position),
-	
-	Gyrus1 = list_to_atom("gyr"++integer_to_list(Turn)),
-	Gyrus2 = list_to_atom("gyr"++integer_to_list(Turn+1)).
+get_state_value(_State) -> 0.
+% NOT FINISHED
+
+
+%% ets table must be created as [named_table,bag]
+learn({Turn,Board},Move,Next_state_value) ->
+	{_,_,Position} = state:board_to_position(Board),
+	Key = state:get_key(Position),	
+	Gyrus1 = gyrus_name(Turn),
+	io:format("Position: ~p~nMove: ~p  Value: ~p~n",[Position,Move,Next_state_value]).
 	%% NOT FINISHED
 
 
 
 get_policy(State) ->
 	case get_best_worst_state_moves(State) of
-		no_policy -> moves:get_selected_moves(State);
+		no_policy -> rand:pick_randomly(moves:get_selected_moves(State));
 		{worst_moves,Worst_moves} -> 
 			Moves = moves:get_selected_moves(State),
 			case lists:filter(fun(M)-> lists:member(M,Worst_moves) end, Moves) of
@@ -87,14 +96,14 @@ get_policy(State) ->
 get_best_worst_state_moves({Turn,Board}) ->
 	{X0,Y0,Position} = state:board_to_position(Board),
 	Key = state:get_key(Position),
-	Gyrus = list_to_atom("gyr"++integer_to_list(Turn)),
+	Gyrus = gyrus_name(Turn),
 	case ets:lookup(Gyrus,Key) of
 		[] -> no_policy;
 		Values -> 
 			case match_position(Position,1,Values) of
 				no_match -> no_policy;
 				{Type,Moves,Variant} -> 
-					case state:filter_legal(Moves,X0,Y0,Variant,Position) of 
+					case state:filter_legal(Moves,X0,Y0,Variant,Position,Board) of 
 						[] -> no_policy;
 						Filtered -> {Type,Filtered}
 					end
@@ -116,6 +125,7 @@ match_position(Position,Variant,Values) ->
 
 
 
+gyrus_name(J) -> list_to_atom("gyrus"++integer_to_list(J)).
 
 
 

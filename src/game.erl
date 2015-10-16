@@ -10,6 +10,7 @@
 		game_manager/7,
     game_manager_call/1,
 		start_new_game/5,
+		change_state/2,
 		color/1
 		]).
 
@@ -110,38 +111,39 @@ game_manager(Schedule,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone) ->
 
 
 
-start_new_game(Gyri,GS,Level,blacks,WS) -> %% run Agent vs. Bot
+start_new_game(Schedule,GS,Level,blacks,WS) -> %% run Agent vs. Bot
 	% bot plays for blacks
 	State = state:init_state(),
-	run_game(Gyri,GS,Level,State,blacks,WS);
-start_new_game(Gyri,GS,Level,whites,WS) -> %% run Agent vs. Bot
+	run_game(Schedule,GS,Level,State,blacks,WS);
+start_new_game(Schedule,GS,Level,whites,WS) -> %% run Agent vs. Bot
 	% bot plays for whites
 	State = state:init_state1(),
-	run_game(Gyri,GS,Level,State,whites,WS).
+	run_game(Schedule,GS,Level,State,whites,WS).
 
 
 
-run_game(Gyri,GS,Level,{Turn,_Board}=State,Color,WS) ->
+run_game(Schedule,GS,Level,{Turn,_Board}=State,Color,WS) ->
 	case color(Turn) =:= Color of
 		true -> % your move
-			%Move = bot:get_move(Gyri,Level,State),
-			Move = rand:rand(State),
+			Move = bot:get_move(Level,State),
+			io:format("Move:~p, State:~p~n",[Move,State]),
+			%Move = rand:rand(State),
 			case change_state(State,Move) of
-				blacks_won -> GS ! {game_over, WS, self(), Move, man_lost};
-				whites_won -> GS ! {game_over, WS, self(), Move, man_lost};
-				draw -> GS ! {game_over, WS, self(), Move, draw};
+				blacks_won -> GS ! {game_over, WS, self(), Move, man_lost}, gyri:save_gyri();
+				whites_won -> GS ! {game_over, WS, self(), Move, man_lost}, gyri:save_gyri();
+				draw -> GS ! {game_over, WS, self(), Move, draw}, gyri:save_gyri();
 				NextState -> GS ! {bot_move, WS, self(), Move},
-					run_game(Gyri,GS,Level,NextState,Color,WS)
+					run_game(Schedule,GS,Level,NextState,Color,WS)
 			end;
 		false->  % Opponent's move
 			receive
 				quit -> ok;		
 				{move, Move} ->
 					case change_state(State,Move) of
-						blacks_won -> GS ! {game_over, WS, self(), man_won};
-						whites_won -> GS ! {game_over, WS, self(), man_won};
-						draw -> GS ! {game_over, WS, self(), draw};
-						NextState -> run_game(Gyri,GS,Level,NextState,Color,WS)
+						blacks_won -> GS ! {game_over, WS, self(), man_won}, gyri:save_gyri();
+						whites_won -> GS ! {game_over, WS, self(), man_won}, gyri:save_gyri();
+						draw -> GS ! {game_over, WS, self(), draw}, gyri:save_gyri();
+						NextState -> run_game(Schedule,GS,Level,NextState,Color,WS)
 					end
 			end
 	end.
@@ -149,9 +151,9 @@ run_game(Gyri,GS,Level,{Turn,_Board}=State,Color,WS) ->
 
 
 change_state({Turn,Board},{I,J}) ->
-	case element(I,element(J,Board)) of
-		e -> 
-			io:format("~nNew ~p move:(~p,~p)~n",[Turn,I,J]),
+	case moves:legal_move({I,J},Board) of
+		true ->
+			%io:format("~nNew ~p move:(~p,~p)~n",[Turn,I,J]),
 			Row1 = erlang:delete_element(I,element(J,Board)),
 			Board1 = erlang:delete_element(J,Board),
 			case color(Turn) of
@@ -171,8 +173,8 @@ change_state({Turn,Board},{I,J}) ->
 				whites -> blacks_won;
 				blacks -> whites_won
 			end;
-		_ when Turn =:= 99 -> draw;
-		_ -> Next_state
+		false when Turn =:= 99 -> draw;
+		false -> Next_state
 	end.	
 
 
