@@ -1,6 +1,4 @@
 .board {
-  margin-left: 50px;
-  margin-top: 50px;
   position: relative;
   display: inline-block;    // div not larger than its contents
 }
@@ -16,6 +14,7 @@
 
 .circle {
   border-radius: 50%;
+  z-index: 1;
 }
 .whites {
   background-color: white;
@@ -27,4 +26,35 @@
 }
 .next {
   border: 2px dashed red;
+}
+
+.message {
+    position:absolute;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    background-color: grey;
+    opacity: 0.8;
+    visibility: hidden;
+    display: flex;
+    justify-content: center; /* align horizontal */
+    align-items: center; /* align vertical */
+    color:red;
+    z-index: 2;
+    font-size: 40px;
+}
+
+.thinking {
+    position:absolute;
+    height: 100%;
+    width: 100%;
+    top: 0;
+    background-color: grey;
+    opacity: 0.6;
+    visibility: hidden;
+    display: flex;
+    justify-content: center; /* align horizontal */
+    align-items: center; /* align vertical */
+    z-index: 2;
+    font-size: 20px;
 }

@@ -66,7 +66,7 @@ game_manager(Schedule,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone) ->
 			end,
 			game_manager(Schedule,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone);
 
-		{connection_closed, WS, Game} ->
+		{connection_closed, Game} ->
 			CurrGames1 = lists:delete(Game,CurrGames),
 			Game ! quit,
 			game_manager(Schedule,CurrGames1,CurrPlayersNbr-1,Won+1,Draw,Lost,GamesDone+1);

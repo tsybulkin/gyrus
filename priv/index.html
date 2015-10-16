@@ -156,7 +156,7 @@
 
 <div id="game_view" class="hidden">
 
-    <button onclick="switch_views()" class="close_game_button"></button>
+    <button onclick="close_game()" class="close_game_button"></button>
     <div class="pure-g main height_max">
         <div id="game_widget_container" class="pure-u-2-3 height_max">
 
@@ -190,13 +190,18 @@
         container.innerHTML = '';
         board = new Board(container, 30, function(x,y) {
             board.addChecker(x, y, color);
+            board.thinking();
             connection.send(['player_move',x,y]);
         });
         if (color == 'blacks')
             board.addChecker(8, 8, 'blacks');
 
         connection = new BoardConnection(board, 'ws:/localhost:8080', color, level);
+    }
 
+    function close_game() {
+        switch_views();
+        connection.close();
     }
 
     function switch_views() {
@@ -208,7 +213,7 @@
         game_view.className = tmpClassName;
     }
 
-    <!--var b = new Board(document.getElementById('left_box'), 10);-->
+    var b = new Board(document.getElementById('left_box'), 10);
 
     <!--b.addChecker(1,1,'black');-->
     <!--b.addChecker(2,2,'white');-->
@@ -229,11 +234,6 @@
     <!--b.addChecker(13,14,'white');-->
 
     <!--var c = new BoardConnection(b, 'ws:/localhost:8080/board/0');-->
-
-
-
-
-
 
 </script>
 

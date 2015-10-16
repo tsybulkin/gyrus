@@ -16,6 +16,26 @@ function Board(parent, cellSize, callback) {
   table.className = 'board_table';
   board.appendChild(table);
 
+  var thinking = document.createElement('div');
+  thinking.className = 'thinking';
+  thinking.innerHTML = 'Bot is thinking...';
+  board.appendChild(thinking);
+  this.thinking = function() {
+    thinking.style.visibility = 'visible';
+  }
+  this.not_thinking = function() {
+    thinking.style.visibility = 'hidden';
+  }
+
+  var message = document.createElement('div');
+  message.className = 'message';
+  board.appendChild(message);
+  this.message = function(text) {
+    message.innerHTML = text;
+    thinking.style.visibility = 'hidden';
+    message.style.visibility = 'visible';
+  }
+
   // add rows
   _.times(size, function(n) {
     var row = document.createElement("tr");
@@ -88,6 +108,7 @@ function BoardConnection(board, baseUrl, color, level) {
     console.log(msg);
     var action = msg[0];
     if ('bot_move' == action) {
+        board.not_thinking();
         var x = msg[1];
         var y = msg[2];
         board.addChecker(x,y,bots_color);
@@ -97,15 +118,14 @@ function BoardConnection(board, baseUrl, color, level) {
             var x = msg[2];
             var y = msg[3];
             board.addChecker(x,y,bots_color);
-            alert("You lose!");
+            board.message("You lose!");
         }
         else if ('man_won' == msg[1]) {
-            alert("You won!");
+            board.message("You won!");
         }
     }
 
   }
-
 
   var ws = new WebSocket(baseUrl + '/new_game/' + color + '/' + level);
   ws.onopen = function() {
@@ -120,5 +140,8 @@ function BoardConnection(board, baseUrl, color, level) {
   };
   this.ws = ws;
 
+  this.close = function() {
+    ws.close();
+  }
 }
 

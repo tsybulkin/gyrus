@@ -1,5 +1,6 @@
 -module(ws_handler).
 -export([init/2]).
+-export([terminate/3]).
 -export([websocket_info/3]).
 -export([websocket_handle/3]).
 
@@ -26,14 +27,15 @@ init(Req, _Opts) ->
   {start_new_game,_,Color,GamePid} = game:game_manager_call({new_game_request, self(), Color, Level}),
   {cowboy_websocket, Req, #state{game_pid = GamePid}}.
 
+terminate(_Reason, _Req, #state{game_pid = Game}) ->
+  game:game_manager_call({connection_closed, Game}).
+
 websocket_info({bot_move, {X,Y}}, Req, State) ->
   {reply, {text, jsx:encode([bot_move, X, Y])}, Req, State};
 websocket_info({game_over, {X,Y}, man_lost}, Req, State) ->
   {reply, {text, jsx:encode([game_over_man_lost, X, Y])}, Req, State};
 websocket_info(Msg, Req, State) ->
   throw({ws, Msg}).
-%% websocket_info(_Msg, Req, State) ->
-%%   {ok, Req, State}.
 
 websocket_handle({text, Bin}, Req, State) ->
   Msg = jsx:decode(Bin),
