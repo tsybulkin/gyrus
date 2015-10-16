@@ -64,7 +64,7 @@ function Board(parent, cellSize, callback) {
 
     function _handleClick() {
       // TODO: check if empty
-      callback(x,y,'white');
+      callback(x,y);
     }
 
     table.onmousemove = _handleMouseMove;
@@ -77,6 +77,7 @@ function Board(parent, cellSize, callback) {
 function BoardConnection(board, baseUrl, color, level) {
   var state = 'init';
   var self = this;
+  var bots_color = (color == 'whites') ? 'blacks' : 'whites';
 
   this.send = function(obj) {
     var json = JSON.stringify(obj);
@@ -89,13 +90,13 @@ function BoardConnection(board, baseUrl, color, level) {
     if ('bot_move' == action) {
         var x = msg[1];
         var y = msg[2];
-        board.addChecker(x,y,'black');
+        board.addChecker(x,y,bots_color);
     }
     else if('game_over' == action) {
         if ('man_lost' == msg[1]) {
             var x = msg[2];
             var y = msg[3];
-            board.addChecker(x,y,'black');
+            board.addChecker(x,y,bots_color);
             alert("You lose!");
         }
         else if ('man_won' == msg[1]) {
