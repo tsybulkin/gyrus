@@ -8,7 +8,7 @@
 -export([get_move/2, gyrus_name/1
 		]).
 
--define(NBR_EPISODES,300).
+-define(NBR_EPISODES,100).
 
 
 get_move(_Level,{1,_Board}) -> {8,8};
@@ -56,16 +56,18 @@ run_episode({Turn,_}=State,Depth,Move) ->
 		draw -> 0;
 		Next_state -> 
 			gyri:check_gyrus(Turn+1),
-			case get_state_value(Next_state) of
+			{NextMove,NextStateValue} = get_policy_value(Next_state),
+			
+			case NextStateValue of
 				0 -> ok;
-				V -> learn(State,Move,V)
+				_ -> learn(State,Move,NextStateValue)
 			end,
-			run_episode(Next_state,Depth-1,get_policy(Next_state))
+			run_episode(Next_state,Depth-1,NextMove)
 	end.
 
 
 
-get_state_value(_State) -> 0.
+%get_state_value(_State) -> 0.
 % NOT FINISHED
 
 
@@ -117,16 +119,16 @@ save_worst_move(X,Y,Position,Key,Gyrus) ->
 
 
 
-get_policy(State) ->
+get_policy_value({Turn,_}=State) ->
 	case get_best_worst_state_moves(State) of
-		no_policy -> rand:pick_randomly(moves:get_selected_moves(State));
+		no_policy -> {rand:pick_randomly(moves:get_selected_moves(State)),0};
 		{worst_moves,Worst_moves} -> 
 			Moves = moves:get_selected_moves(State),
 			case lists:filter(fun(M)-> lists:member(M,Worst_moves) end, Moves) of
-				[] -> io:format("NO GOOD MOVES~n"), rand:pick_randomly(Moves);
-				Good_moves -> rand:pick_randomly(Good_moves)
+				[] -> io:format("NO GOOD MOVES~n"), {rand:pick_randomly(Moves),min_value(game:color(Turn))};
+				Good_moves -> {rand:pick_randomly(Good_moves),0}
 			end;
-		{best_moves,Best_moves} -> rand:pick_randomly(Best_moves)
+		{best_moves,Best_moves} -> {rand:pick_randomly(Best_moves),max_value(game:color(Turn))}
 	end.
 
 
@@ -177,6 +179,14 @@ get_variant_values(Position,Variant,Values) ->
 
 
 gyrus_name(J) -> list_to_atom("gyrus"++integer_to_list(J)).
+
+
+
+min_value(blacks) -> 1;
+min_value(whites) -> -1.
+
+max_value(blacks) -> -1;
+max_value(whites) -> 1.
 
 
 
