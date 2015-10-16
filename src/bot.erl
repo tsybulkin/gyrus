@@ -8,7 +8,7 @@
 -export([get_move/2, gyrus_name/1
 		]).
 
--define(NBR_EPISODES,600).
+-define(NBR_EPISODES,300).
 
 
 get_move(_Level,{1,_Board}) -> {8,8};

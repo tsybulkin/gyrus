@@ -74,7 +74,6 @@ game_manager(Schedule,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone) ->
 		
 		{game_over,WS,Game,man_won} ->
 			WS ! {game_over, man_won},
-			gyri:save_gyri(),
 			CurrGames1 = lists:delete(Game,CurrGames),
 			game_manager(Schedule,CurrGames1,CurrPlayersNbr-1,Won,Draw,Lost+1,GamesDone+1);
 		
@@ -85,7 +84,6 @@ game_manager(Schedule,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone) ->
 
 		{game_over,WS,Game,Last_move,man_lost} ->
 			WS ! {game_over, Last_move, man_lost},
-			gyri:save_gyri(),
 			CurrGames1 = lists:delete(Game,CurrGames),
 			game_manager(Schedule,CurrGames1,CurrPlayersNbr-1,Won+1,Draw,Lost,GamesDone+1);
 			
@@ -131,9 +129,9 @@ run_game(Schedule,GS,Level,{Turn,_Board}=State,Color,WS) ->
 			io:format("Move:~p, State:~p~n",[Move,State]),
 			%Move = rand:rand(State),
 			case change_state(State,Move) of
-				blacks_won -> GS ! {game_over, WS, self(), Move, man_lost};
-				whites_won -> GS ! {game_over, WS, self(), Move, man_lost};
-				draw -> GS ! {game_over, WS, self(), Move, draw};
+				blacks_won -> GS ! {game_over, WS, self(), Move, man_lost}, gyri:save_gyri();
+				whites_won -> GS ! {game_over, WS, self(), Move, man_lost}, gyri:save_gyri();
+				draw -> GS ! {game_over, WS, self(), Move, draw}, gyri:save_gyri();
 				NextState -> GS ! {bot_move, WS, self(), Move},
 					run_game(Schedule,GS,Level,NextState,Color,WS)
 			end;
@@ -142,9 +140,9 @@ run_game(Schedule,GS,Level,{Turn,_Board}=State,Color,WS) ->
 				quit -> ok;		
 				{move, Move} ->
 					case change_state(State,Move) of
-						blacks_won -> GS ! {game_over, WS, self(), man_won};
-						whites_won -> GS ! {game_over, WS, self(), man_won};
-						draw -> GS ! {game_over, WS, self(), draw};
+						blacks_won -> GS ! {game_over, WS, self(), man_won}, gyri:save_gyri();
+						whites_won -> GS ! {game_over, WS, self(), man_won}, gyri:save_gyri();
+						draw -> GS ! {game_over, WS, self(), draw}, gyri:save_gyri();
 						NextState -> run_game(Schedule,GS,Level,NextState,Color,WS)
 					end
 			end
@@ -153,8 +151,8 @@ run_game(Schedule,GS,Level,{Turn,_Board}=State,Color,WS) ->
 
 
 change_state({Turn,Board},{I,J}) ->
-	case element(I,element(J,Board)) of
-		e -> 
+	case moves:legal_move({I,J},Board) of
+		true ->
 			%io:format("~nNew ~p move:(~p,~p)~n",[Turn,I,J]),
 			Row1 = erlang:delete_element(I,element(J,Board)),
 			Board1 = erlang:delete_element(J,Board),
