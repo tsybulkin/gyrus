@@ -5,7 +5,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -module(gyri).
--export([init_gyri/0, save_gyri/0, new_gyrus/1
+-export([init_gyri/0, save_gyri/0, new_gyrus/1, check_gyrus/1
 		]).
 
 
@@ -23,10 +23,19 @@ init_gyri() ->
 
 
 save_gyri() ->
-	Gyri = lists:filter(fun(Tab)-> lists:sublist(atom_to_list(Tab),5)=="gyrus" 
-						end, ets:all() ),
+	Named = lists:filter(fun(Tab)-> is_atom(Tab) end, ets:all() ),
+	Gyri = lists:filter(fun(Tab)-> lists:sublist(atom_to_list(Tab),5)=="gyrus" end, Named),
 	lists:foreach(  fun(Tab)-> ets:tab2file(Tab,"data/"++atom_to_list(Tab))
 					end,Gyri).
+
+
+
+check_gyrus(J) -> Gyrus = bot:gyrus_name(J),
+	Tabs = ets:all(),
+	case lists:member(Gyrus,Tabs) of
+		true -> ok;
+		false-> ets:new(Gyrus,[named_table,bag])
+	end.
 
 
 

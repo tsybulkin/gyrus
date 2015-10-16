@@ -10,14 +10,15 @@
 		game_manager/7,
     game_manager_call/1,
 		start_new_game/5,
+		change_state/2,
 		color/1
 		]).
 
 -define(CONCURRENT_GAMES_LIMIT, 11).
 
 start_link() ->
-	MaxGyrus = gyri:init_gyri(),
-	Pid = spawn_link(?MODULE, game_manager, [MaxGyrus,[],0,0,0,0,0]),
+	Schedule = [],
+	Pid = spawn_link(?MODULE, game_manager, [Schedule,[],0,0,0,0,0]),
 	true = register(game_manager, Pid),
 	{ok, Pid}.
 
@@ -25,9 +26,9 @@ game_manager_call(Request) ->
 	game_manager ! Request,
 	receive Response -> Response end.
 
-game_manager(MaxGyrus) -> game_manager(MaxGyrus,[],0,0,0,0,0).
+game_manager(Schedule) -> game_manager(Schedule,[],0,0,0,0,0).
 
-game_manager(MaxGyrus,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone) ->
+game_manager(Schedule,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone) ->
 	receive
 		{new_game_request, WS, Color, Level} ->
 			io:format("~p~n", [{new_game_request, WS, Color, Level}]),
@@ -36,17 +37,17 @@ game_manager(MaxGyrus,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone) ->
 					GS = self(),
 					case Color of
 						blacks ->
-							Game_id = spawn(?MODULE,start_new_game,[MaxGyrus,GS,Level,whites,WS]),
+							Game_id = spawn(?MODULE,start_new_game,[Schedule,GS,Level,whites,WS]),
 							WS ! {start_new_game, state:init_state1(), blacks, Game_id};
 						whites ->
-							Game_id = spawn(?MODULE,start_new_game,[MaxGyrus,GS,Level,blacks,WS]),
+							Game_id = spawn(?MODULE,start_new_game,[Schedule,GS,Level,blacks,WS]),
 							WS ! {start_new_game, state:init_state(), whites, Game_id}
 					end,
-					game_manager(MaxGyrus,[Game_id|CurrGames],CurrPlayersNbr+1,Won,Draw,Lost,GamesDone);
+					game_manager(Schedule,[Game_id|CurrGames],CurrPlayersNbr+1,Won,Draw,Lost,GamesDone);
 				
 				false ->
 					WS ! too_many_players,
-					game_manager(MaxGyrus,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone)
+					game_manager(Schedule,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone)
 			end;
 
 		{player_move, WS, Game, Move} ->
@@ -55,7 +56,7 @@ game_manager(MaxGyrus,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone) ->
 
 				false -> WS ! {game_not_exists, Game}
 			end,
-			game_manager(MaxGyrus,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone);
+			game_manager(Schedule,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone);
 
 		{bot_move, WS, Game, Move} ->
 			case lists:member(Game, CurrGames) of
@@ -63,39 +64,39 @@ game_manager(MaxGyrus,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone) ->
 
 				false -> Game ! quit
 			end,
-			game_manager(MaxGyrus,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone);
+			game_manager(Schedule,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone);
 
 		{connection_closed, WS, Game} ->
 			CurrGames1 = lists:delete(Game,CurrGames),
 			Game ! quit,
-			game_manager(MaxGyrus,CurrGames1,CurrPlayersNbr-1,Won+1,Draw,Lost,GamesDone+1);
+			game_manager(Schedule,CurrGames1,CurrPlayersNbr-1,Won+1,Draw,Lost,GamesDone+1);
 
 		
 		{game_over,WS,Game,man_won} ->
 			WS ! {game_over, man_won},
 			gyri:save_gyri(),
 			CurrGames1 = lists:delete(Game,CurrGames),
-			game_manager(MaxGyrus,CurrGames1,CurrPlayersNbr-1,Won,Draw,Lost+1,GamesDone+1);
+			game_manager(Schedule,CurrGames1,CurrPlayersNbr-1,Won,Draw,Lost+1,GamesDone+1);
 		
 		{game_over,WS,Game,draw} ->
 			WS ! {game_over, draw},
 			CurrGames1 = lists:delete(Game,CurrGames),
-			game_manager(MaxGyrus,CurrGames1,CurrPlayersNbr-1,Won,Draw+1,Lost,GamesDone+1);
+			game_manager(Schedule,CurrGames1,CurrPlayersNbr-1,Won,Draw+1,Lost,GamesDone+1);
 
 		{game_over,WS,Game,Last_move,man_lost} ->
 			WS ! {game_over, Last_move, man_lost},
 			gyri:save_gyri(),
 			CurrGames1 = lists:delete(Game,CurrGames),
-			game_manager(MaxGyrus,CurrGames1,CurrPlayersNbr-1,Won+1,Draw,Lost,GamesDone+1);
+			game_manager(Schedule,CurrGames1,CurrPlayersNbr-1,Won+1,Draw,Lost,GamesDone+1);
 			
 		{game_over,WS,Game,Last_move,draw} ->
 			WS ! {game_over, Game, Last_move, draw},
 			CurrGames1 = lists:delete(Game,CurrGames),
-			game_manager(MaxGyrus,CurrGames1,CurrPlayersNbr-1,Won,Draw+1,Lost,GamesDone+1);
+			game_manager(Schedule,CurrGames1,CurrPlayersNbr-1,Won,Draw+1,Lost,GamesDone+1);
 		
 		{game_over,WS,Game,_Last_move,bot_game} ->
 			CurrGames1 = lists:delete(Game,CurrGames),
-			game_manager(MaxGyrus,CurrGames1,CurrPlayersNbr-2,Won,Draw,Lost,GamesDone+1);
+			game_manager(Schedule,CurrGames1,CurrPlayersNbr-2,Won,Draw,Lost,GamesDone+1);
 
 		%% TODO: delete this
 		Err -> throw(Err)
@@ -112,28 +113,29 @@ game_manager(MaxGyrus,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone) ->
 
 
 
-start_new_game(Gyri,GS,Level,blacks,WS) -> %% run Agent vs. Bot
+start_new_game(Schedule,GS,Level,blacks,WS) -> %% run Agent vs. Bot
 	% bot plays for blacks
 	State = state:init_state(),
-	run_game(Gyri,GS,Level,State,blacks,WS);
-start_new_game(Gyri,GS,Level,whites,WS) -> %% run Agent vs. Bot
+	run_game(Schedule,GS,Level,State,blacks,WS);
+start_new_game(Schedule,GS,Level,whites,WS) -> %% run Agent vs. Bot
 	% bot plays for whites
 	State = state:init_state1(),
-	run_game(Gyri,GS,Level,State,whites,WS).
+	run_game(Schedule,GS,Level,State,whites,WS).
 
 
 
-run_game(Gyri,GS,Level,{Turn,_Board}=State,Color,WS) ->
+run_game(Schedule,GS,Level,{Turn,_Board}=State,Color,WS) ->
 	case color(Turn) =:= Color of
 		true -> % your move
-			%Move = bot:get_move(Gyri,Level,State),
-			Move = rand:rand(State),
+			Move = bot:get_move(Level,State),
+			io:format("Move:~p, State:~p~n",[Move,State]),
+			%Move = rand:rand(State),
 			case change_state(State,Move) of
 				blacks_won -> GS ! {game_over, WS, self(), Move, man_lost};
 				whites_won -> GS ! {game_over, WS, self(), Move, man_lost};
 				draw -> GS ! {game_over, WS, self(), Move, draw};
 				NextState -> GS ! {bot_move, WS, self(), Move},
-					run_game(Gyri,GS,Level,NextState,Color,WS)
+					run_game(Schedule,GS,Level,NextState,Color,WS)
 			end;
 		false->  % Opponent's move
 			receive
@@ -143,7 +145,7 @@ run_game(Gyri,GS,Level,{Turn,_Board}=State,Color,WS) ->
 						blacks_won -> GS ! {game_over, WS, self(), man_won};
 						whites_won -> GS ! {game_over, WS, self(), man_won};
 						draw -> GS ! {game_over, WS, self(), draw};
-						NextState -> run_game(Gyri,GS,Level,NextState,Color,WS)
+						NextState -> run_game(Schedule,GS,Level,NextState,Color,WS)
 					end
 			end
 	end.
@@ -153,7 +155,7 @@ run_game(Gyri,GS,Level,{Turn,_Board}=State,Color,WS) ->
 change_state({Turn,Board},{I,J}) ->
 	case element(I,element(J,Board)) of
 		e -> 
-			io:format("~nNew ~p move:(~p,~p)~n",[Turn,I,J]),
+			%io:format("~nNew ~p move:(~p,~p)~n",[Turn,I,J]),
 			Row1 = erlang:delete_element(I,element(J,Board)),
 			Board1 = erlang:delete_element(J,Board),
 			case color(Turn) of
@@ -173,8 +175,8 @@ change_state({Turn,Board},{I,J}) ->
 				whites -> blacks_won;
 				blacks -> whites_won
 			end;
-		_ when Turn =:= 99 -> draw;
-		_ -> Next_state
+		false when Turn =:= 99 -> draw;
+		false -> Next_state
 	end.	
 
 

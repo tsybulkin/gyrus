@@ -5,25 +5,26 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -module(bot).
--export([get_move/3, gyrus_name/1
+-export([get_move/2, gyrus_name/1
 		]).
 
 -define(NBR_EPISODES,600).
 
 
-get_move(MaxGyrus,Level,State) ->
+get_move(_Level,{1,_Board}) -> {8,8};
+get_move(Level,{Turn,_}=State) ->
+	gyri:check_gyrus(Turn),
 	case moves:get_selected_moves(State) of
 		[Move] ->
 			%io:format("One move selected~n"), 
 			Move;
 		[_|_]=Moves ->
 			N = episodes_nbr(Level),
-			Scores = monte_carlo(MaxGyrus,State,Moves, N div length(Moves)),	
-			% Scores = eflame:apply(?MODULE,monte_carlo,[State,Moves,?NBR_EPISODES div length(Moves)]),	
+			Scores = monte_carlo(State,Moves, N div length(Moves)),	
 			io:format("~nScores: ~p~n",[Scores]),
 
 			Best_moves = lists:sublist([XY || {_,XY}<-Scores],3),
-			Refined = monte_carlo(MaxGyrus,State,Best_moves, N div length(Best_moves)),	
+			Refined = monte_carlo(State,Best_moves, N div length(Best_moves)),	
 			io:format("~nRefined: ~p~n",[Refined]),
 
 			[{_,Move}|_] = Refined, Move
@@ -31,12 +32,12 @@ get_move(MaxGyrus,Level,State) ->
 
 
 
-monte_carlo(MaxGyrus,{Turn,_}=State,Moves,Simulation_Nbr) ->
+monte_carlo({Turn,_}=State,Moves,Simulation_Nbr) ->
 	Depth = 2*round(math:log(Simulation_Nbr)),
 	lists:sort( fun({A,_},{B,_})-> A>B end,lists:foldl(
 		fun(Move,Acc) ->
 			CumScore = 
-			lists:foldl(fun(_,ScoreAcc)-> run_episode(MaxGyrus,State,Depth,Move)+ScoreAcc
+			lists:foldl(fun(_,ScoreAcc)-> run_episode(State,Depth,Move)+ScoreAcc
 						end,0,lists:seq(1,Simulation_Nbr)),
 			case game:color(Turn) of
 				blacks -> [{-CumScore,Move}|Acc];
@@ -47,30 +48,29 @@ monte_carlo(MaxGyrus,{Turn,_}=State,Moves,Simulation_Nbr) ->
 
 
 
-run_episode(_MaxGyrus,_State,0,_Move) -> 0;
-run_episode(MaxGyrus,{Turn,_}=State,Depth,Move) ->
+run_episode(_State,0,_Move) -> 0;
+run_episode({Turn,_}=State,Depth,Move) ->
 	case game:change_state(State,Move) of
 		blacks_won -> learn(State,Move,-1),-1;
 		whites_won -> learn(State,Move, 1), 1;
 		draw -> 0;
 		Next_state -> 
-			if Turn =:= MaxGyrus -> gyri:new_gyrus(Turn+1); true -> ok end,
-			Gyrus2 = gyrus_name(Turn+1),
+			gyri:check_gyrus(Turn+1),
 			case get_state_value(Next_state) of
 				0 -> ok;
 				V -> learn(State,Move,V)
 			end,
-			run_episode(MaxGyrus+1,Next_state,Depth-1,get_policy(Next_state))
+			run_episode(Next_state,Depth-1,get_policy(Next_state))
 	end.
 
 
 
-get_state_value(State) -> 0.
+get_state_value(_State) -> 0.
 % NOT FINISHED
 
 
 %% ets table must be created as [named_table,bag]
-learn({Turn,Board}=State,Move,Next_state_value) ->
+learn({Turn,Board},Move,Next_state_value) ->
 	{_,_,Position} = state:board_to_position(Board),
 	Key = state:get_key(Position),	
 	Gyrus1 = gyrus_name(Turn),
@@ -81,7 +81,7 @@ learn({Turn,Board}=State,Move,Next_state_value) ->
 
 get_policy(State) ->
 	case get_best_worst_state_moves(State) of
-		no_policy -> moves:get_selected_moves(State);
+		no_policy -> rand:pick_randomly(moves:get_selected_moves(State));
 		{worst_moves,Worst_moves} -> 
 			Moves = moves:get_selected_moves(State),
 			case lists:filter(fun(M)-> lists:member(M,Worst_moves) end, Moves) of
@@ -103,7 +103,7 @@ get_best_worst_state_moves({Turn,Board}) ->
 			case match_position(Position,1,Values) of
 				no_match -> no_policy;
 				{Type,Moves,Variant} -> 
-					case state:filter_legal(Moves,X0,Y0,Variant,Position) of 
+					case state:filter_legal(Moves,X0,Y0,Variant,Position,Board) of 
 						[] -> no_policy;
 						Filtered -> {Type,Filtered}
 					end

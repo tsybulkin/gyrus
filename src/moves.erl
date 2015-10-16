@@ -9,7 +9,8 @@
 		get_selected_moves/1,
 		get_enforced_moves/3,
 		get_good_moves/4,
-		get_good_moves/3]).
+		get_good_moves/3,
+		legal_move/2]).
 
 
 
@@ -54,7 +55,7 @@ get_mat(Own,Opp,Lines) ->
 
 
 get_enforced_moves(Own,Opp,Lines) -> 
-	Open3 = lines:find_open3(Opp,Lines),
+	Open3 = lines:prevent_open3(Opp,Lines),
 	case Open3 of
 		[] -> [];
 		_ -> lists:usort(lines:find_covered3(Own,Lines)++Open3)
@@ -129,6 +130,13 @@ aggregate(Ls) ->
 	IndexList = lists:usort([ I || {I,_} <- Ls]),
 	[ {I,lists:sum([ Rate || {_,Rate} <- lists:filter(fun({A,_})-> A=:=I end, Ls)]) } || I <- IndexList].
 
+
+
+legal_move({I,J},Board) ->
+	case element(I,element(J,Board)) of
+		e -> true;
+		_ -> false
+	end.
 
 
 

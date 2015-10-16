@@ -10,7 +10,7 @@
 		get_key/1,
 		next_variant/2,
 		back_transform/4,
-		filter_legal/5
+		filter_legal/6
 		]).
 
 
@@ -74,10 +74,10 @@ get_key(Position) ->
 
 
 
-filter_legal(Moves,X0,Y0,Variant,Position) -> 
+filter_legal(Moves,X0,Y0,Variant,Position,Board) -> 
 	lists:foldl(fun({X,Y},Acc)-> 
 		{X1,Y1} = back_transform(X,Y,Variant,Position),
-		case legal_place(X0+X1,Y0+Y1) of
+		case legal_place(X0+X1,Y0+Y1,Board) of
 			true -> [{X0+X1,Y0+Y1}|Acc]; 
 			false-> Acc 
 		end
@@ -85,8 +85,8 @@ filter_legal(Moves,X0,Y0,Variant,Position) ->
 
 
 
-legal_place(X,Y) when X<1; X>15; Y<1; Y>15 -> false;
-legal_place(_,_) -> true.
+legal_place(X,Y,_Board) when X<1; X>15; Y<1; Y>15 -> false;
+legal_place(X,Y,Board) -> moves:legal_move({X,Y},Board).
 
 
 
