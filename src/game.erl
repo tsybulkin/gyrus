@@ -126,7 +126,7 @@ run_game(Schedule,GS,Level,{Turn,_Board}=State,Color,WS) ->
 	case color(Turn) =:= Color of
 		true -> % your move
 			Move = bot:get_move(Level,State),
-			io:format("Move:~p, State:~p~n",[Move,State]),
+			io:format("Bot move:~p, State:~p~n",[Move,State]),
 			%Move = rand:rand(State),
 			case change_state(State,Move) of
 				blacks_won -> GS ! {game_over, WS, self(), Move, man_lost}, gyri:save_gyri();
@@ -139,6 +139,7 @@ run_game(Schedule,GS,Level,{Turn,_Board}=State,Color,WS) ->
 			receive
 				quit -> ok;		
 				{move, Move} ->
+					io:format("Human move:~p, State:~p~n",[Move,State]),
 					case change_state(State,Move) of
 						blacks_won -> GS ! {game_over, WS, self(), man_won}, gyri:save_gyri();
 						whites_won -> GS ! {game_over, WS, self(), man_won}, gyri:save_gyri();

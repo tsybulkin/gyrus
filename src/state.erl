@@ -74,19 +74,25 @@ get_key(Position) ->
 
 
 
-filter_legal(Moves,X0,Y0,Variant,Position,Board) -> 
+filter_legal(Moves,X0,Y0,Variant,Position,{Turn,Board}) -> 
 	lists:foldl(fun({X,Y},Acc)-> 
-		{X1,Y1} = back_transform(X,Y,Variant,Position),
-		case legal_place(X0+X1,Y0+Y1,Board) of
-			true -> [{X0+X1,Y0+Y1}|Acc]; 
-			false-> Acc 
-		end
+					{X1,Y1} = back_transform(X,Y,Variant,Position),
+					case legal_place(X0+X1,Y0+Y1,{Turn,Board},[X0,Y0,Variant,Position]) of
+						true -> [{X0+X1,Y0+Y1}|Acc]; 
+						false-> Acc 
+					end
 				end,[],Moves).
 
 
 
-legal_place(X,Y,_Board) when X<1; X>15; Y<1; Y>15 -> false;
-legal_place(X,Y,Board) -> moves:legal_move({X,Y},Board).
+legal_place(X,Y,{Turn,Board},Args) when X<1; X>15; Y<1; Y>15 -> false;
+legal_place(X,Y,{Turn,Board},Args) -> 
+	case moves:legal_move({X,Y},Board) of
+		false ->
+			io:format("XY=~p, Turn:~p,Board=~p~nArgs:~p~n",[{X,Y},Turn,Board,Args]),
+			error(error);
+		true -> true
+	end.
 
 
 
@@ -115,9 +121,9 @@ back_transform(X,Y,Variant,Position) ->
 	end.
 
 back_transform(X,Y,1,_Cx,_Cy) -> {X,Y};
-back_transform(X,Y,2,Cx,_Cy) -> {Y, Cx-X};
+back_transform(X,Y,2,Cx,_Cy) -> {Y,Cx-X};
 back_transform(X,Y,3,Cx,Cy) -> {Cx-X,Cy-Y};
-back_transform(X,Y,4,_Cx,Cy) -> {Cy-Y,X}.
+back_transform(X,Y,4,_Cx,Cy) -> {Cy-Y, X}.
 
 
 

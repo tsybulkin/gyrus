@@ -70,12 +70,35 @@ get_state_value(_State) -> 0.
 
 
 %% ets table must be created as [named_table,bag]
-learn({Turn,Board},Move,Next_state_value) ->
-	{_,_,Position} = state:board_to_position(Board),
+learn({Turn,Board},{X,Y},Next_state_value) ->
+	{X0,Y0,Position} = state:board_to_position(Board),
+	X1=X-X0, Y1=Y-Y0,
 	Key = state:get_key(Position),	
-	Gyrus1 = gyrus_name(Turn),
-	io:format("Position: ~p~nMove: ~p  Value: ~p~n",[Position,Move,Next_state_value]).
-	%% NOT FINISHED
+	Gyrus = gyrus_name(Turn),
+	
+	case {game:color(Turn),Next_state_value} of
+		{blacks,1} -> save_worst_move(X1,Y1,Position,Key,Gyrus);
+		{blacks,-1} -> save_best_move(X1,Y1,Position,Key,Gyrus);
+		{whites,1} -> save_best_move(X1,Y1,Position,Key,Gyrus);
+		{whites,-1} -> save_worst_move(X1,Y1,Position,Key,Gyrus)
+	end.
+
+
+
+save_best_move(X,Y,Position,Key,Gyrus) ->
+	case ets:lookup(Gyrus,Key) of
+		[] -> ets:insert(Gyrus,{Key,Position,[{X,Y}],[]});
+		Values ->
+			io:format("Saving position:~p XY=~p into existing record: ~p~n",[Position,{X,Y},Values])
+	end.
+
+
+save_worst_move(X,Y,Position,Key,Gyrus) ->
+	case ets:lookup(Gyrus,Key) of
+		[] -> ets:insert(Gyrus,{Key,Position,[],[{X,Y}]});
+		Values ->
+			io:format("Saving position: ~p into existing record: ~p~n",[Position,Values])
+	end.
 
 
 
@@ -103,7 +126,7 @@ get_best_worst_state_moves({Turn,Board}) ->
 			case match_position(Position,1,Values) of
 				no_match -> no_policy;
 				{Type,Moves,Variant} -> 
-					case state:filter_legal(Moves,X0,Y0,Variant,Position,Board) of 
+					case state:filter_legal(Moves,X0,Y0,Variant,Position,{Turn,Board}) of 
 						[] -> no_policy;
 						Filtered -> {Type,Filtered}
 					end
@@ -112,15 +135,15 @@ get_best_worst_state_moves({Turn,Board}) ->
 	
 
 
-match_position(_Position,-1,_Values) -> no_match;
+match_position(_Position,-1,_Values) -> io:format("no_match found~n"),no_match;
 match_position(Position,Variant,Values) ->
-	case lists:keyfind(Position,1,Values) of
+	case lists:keyfind(Position,2,Values) of
 		false -> 
 			{Position1,Next_var} = state:next_variant(Position,Variant),
 			match_position(Position1,Next_var,Values);
 
-		{_,[],Worst} -> {worst_moves,Worst,Variant};
-		{_,Best,_} -> {best_moves,Best,Variant}
+		{_,Position,[],Worst} -> {worst_moves,Worst,Variant};
+		{_,Position,Best,_} -> {best_moves,Best,Variant}
 	end.
 
 
