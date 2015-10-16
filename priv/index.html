@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="static/css/normalize.css">
     <link rel="stylesheet" href="static/css/pure-min.css">
     <link rel="stylesheet" href="static/css/board.css">
+    <link rel="stylesheet" href="static/css/switch.css">
 
     <style type="text/css">
 
@@ -57,7 +58,7 @@
         }
 
         .button-easy,
-        .button-average,
+        .button-medium,
         .button-hard,
         .button-move {
         color: white;
@@ -73,7 +74,7 @@
         .button-move{
         background: rgb(48, 152, 80);
         }
-        .button-average {
+        .button-medium {
         background: rgb(197, 150, 55);
         }
         .button-hard {
@@ -97,13 +98,19 @@
             background-repeat: no-repeat;
         }
 
+        .switch_container {
+        margin-top: 20px;
+        }
+
+
+
     </style>
 
 </head>
 
 <body>
 
-<div id="main_view" class="hidden">
+<div id="main_view" class="visible">
     <div class="pure-g main height_max">
         <div class="pure-u-1-3 height_max">
             <div class="box" id="left_box">
@@ -136,16 +143,18 @@
             <div class="box">
                 <h3 class="h">new game</h3>
                 <center>
-                    <button onclick="start_game(0)" class="button-easy pure-button">easy</button>
-                    <button onclick="start_game(1)" class="button-average pure-button">average</button>
-                    <button onclick="start_game(2)" class="button-hard pure-button">hard</button>
+                    <label class="switch_container"><input type="checkbox" id="color_check" class="ios-switch" checked /></label>
+
+                    <button onclick="start_game('easy')" class="button-easy pure-button">easy</button>
+                    <button onclick="start_game('medium')" class="button-medium pure-button">medium</button>
+                    <button onclick="start_game('hard')" class="button-hard pure-button">hard</button>
                 </center>
             </div>
         </div>
     </div>
 </div>
 
-<div id="game_view" class="visible">
+<div id="game_view" class="hidden">
 
     <button onclick="switch_views()" class="close_game_button"></button>
     <div class="pure-g main height_max">
@@ -164,8 +173,30 @@
 <script type="text/javascript" src="static/js/board.js"></script>
 <script type="text/javascript">
 
+    // iOS switch
+    var switches = document.querySelectorAll('input[type="checkbox"].ios-switch');
+    for (var i=0, sw; sw = switches[i++]; ) {
+        var div = document.createElement('div');
+        div.className = 'switch';
+        sw.parentNode.insertBefore(div, sw.nextSibling);
+    }
+
+    var board = undefined;
+    var connection = undefined;
     function start_game(level) {
         switch_views();
+        var color = (document.getElementById("color_check").checked) ? 'blacks' : 'whites';
+        var container = document.getElementById('game_widget_container');
+        container.innerHTML = '';
+        board = new Board(container, 30, function(x,y) {
+            board.addChecker(x, y, color);
+            connection.send(['player_move',x,y]);
+        });
+        if (color == 'blacks')
+            board.addChecker(8, 8, 'blacks');
+
+        connection = new BoardConnection(board, 'ws:/localhost:8080', color, level);
+
     }
 
     function switch_views() {
@@ -199,14 +230,8 @@
 
     <!--var c = new BoardConnection(b, 'ws:/localhost:8080/board/0');-->
 
-    var connection = undefined;
 
-    b = new Board(document.getElementById('game_widget_container'), 30, function(x,y,color) {
-      b.addChecker(x, y, 'white');
-      connection.send(['player_move',x,y]);
-    });
 
-    connection = new BoardConnection(b, 'ws:/localhost:8080', 'whites', 'easy');
 
 
 
