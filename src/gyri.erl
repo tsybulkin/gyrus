@@ -5,8 +5,14 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -module(gyri).
--export([save_gyri/0, new_gyrus/1, check_gyrus/1
+-export([init_gyri/0, save_gyri/0, new_gyrus/1, check_gyrus/1
 		]).
+
+
+init_gyri() ->
+	{ok,Files} = file:list_dir("data"),
+	lists:foreach(  fun(File)-> ets:file2tab(File)
+					end,Files).
 
 
 

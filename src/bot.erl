@@ -8,7 +8,7 @@
 -export([get_move/2, gyrus_name/1
 		]).
 
--define(NBR_EPISODES,100).
+-define(NBR_EPISODES,50).
 
 
 get_move(_Level,{1,_Board}) -> {8,8};
@@ -95,9 +95,17 @@ save_best_move(X,Y,Position,Key,Gyrus) ->
 				not_found -> ets:insert(Gyrus,{Key,Position,[{X,Y}],[]});
 				{Var,SymPosition,Best_moves,Worst_moves} ->
 					{X1,Y1} = state:transform(X,Y,Var,Position),
-					Values1 = lists:keyreplace(SymPosition,2,Values,{Key,SymPosition,[{X1,Y1}|Best_moves],Worst_moves}),
-					ets:delete(Gyrus,Key),
-					ets:insert(Gyrus,Values1)
+					case lists:member({X1,Y1},Best_moves) of
+						true -> ok;
+						false->
+							Values1 = lists:keyreplace(SymPosition,2,Values,{Key,SymPosition,[{X1,Y1}|Best_moves],Worst_moves}),
+							io:format("Old values:~p~nNew Values: ~p~n",[Values,Values1]),
+							ets:delete(Gyrus,Key),
+							case Values1 of
+								[Tup] -> ets:insert(Gyrus,Tup);
+								[_|_] -> ets:insert(Gyrus,Values1)
+							end
+					end
 			end
 	end.
 
@@ -111,9 +119,17 @@ save_worst_move(X,Y,Position,Key,Gyrus) ->
 				not_found -> ets:insert(Gyrus,{Key,Position,[{X,Y}],[]});
 				{Var,SymPosition,Best_moves,Worst_moves} ->
 					{X1,Y1} = state:transform(X,Y,Var,Position),
-					Values1 = lists:keyreplace(SymPosition,2,Values,{Key,SymPosition,Best_moves,[{X1,Y1}|Worst_moves]}),
-					ets:delete(Gyrus,Key),
-					ets:insert(Gyrus,Values1)
+					case lists:member({X1,Y1},Worst_moves) of
+						true -> ok;
+						false->
+							Values1 = lists:keyreplace(SymPosition,2,Values,{Key,SymPosition,Best_moves,[{X1,Y1}|Worst_moves]}),
+							ets:delete(Gyrus,Key),
+							io:format("Old values:~p~nNew Values: ~p~n",[Values,Values1]),
+							case Values1 of
+								[Tup] -> ets:insert(Gyrus,Tup);
+								[_|_] -> ets:insert(Gyrus,Values1)
+							end
+					end
 			end
 	end.
 
@@ -191,6 +207,6 @@ max_value(whites) -> 1.
 
 
 episodes_nbr(easy)  -> ?NBR_EPISODES;
-episodes_nbr(medium)-> ?NBR_EPISODES*3;
-episodes_nbr(hard)  -> ?NBR_EPISODES*10.
+episodes_nbr(medium)-> ?NBR_EPISODES*5;
+episodes_nbr(hard)  -> ?NBR_EPISODES*20.
 
