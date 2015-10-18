@@ -16,7 +16,8 @@ get_move(Level,{Turn,_}=State) ->
 	gyri:check_gyrus(Turn),
 	case moves:get_selected_moves(State) of
 		[Move] ->
-			%io:format("One move selected~n"), 
+			io:format("One move selected~n"), 
+			run_episode(State,3,Move),
 			Move;
 		[_|_]=Moves ->
 			N = episodes_nbr(Level),
@@ -57,11 +58,7 @@ run_episode({Turn,_}=State,Depth,Move) ->
 		Next_state -> 
 			gyri:check_gyrus(Turn+1),
 			{NextMove,NextStateValue} = get_policy_value(Next_state),
-			
-			case NextStateValue of
-				0 -> ok;
-				_ -> learn(State,Move,NextStateValue)
-			end,
+			learn(State,Move,NextStateValue),
 			run_episode(Next_state,Depth-1,NextMove)
 	end.
 
@@ -72,12 +69,14 @@ run_episode({Turn,_}=State,Depth,Move) ->
 
 
 %% ets table must be created as [named_table,bag]
+learn(_,_,0) -> ok;
 learn({Turn,Board},{X,Y},Next_state_value) ->
 	{X0,Y0,Position} = state:board_to_position(Board),
 	X1=X-X0, Y1=Y-Y0,
 	Key = state:get_key(Position),	
 	Gyrus = gyrus_name(Turn),
-	
+	io:format("learning at state:~p(~p) that move:~p leads to ~p~n",[game:color(Turn),Turn,{X,Y},Next_state_value]),
+
 	case {game:color(Turn),Next_state_value} of
 		{blacks,1} -> save_worst_move(X1,Y1,Position,Key,Gyrus);
 		{blacks,-1} -> save_best_move(X1,Y1,Position,Key,Gyrus);
@@ -101,10 +100,7 @@ save_best_move(X,Y,Position,Key,Gyrus) ->
 							Values1 = lists:keyreplace(SymPosition,2,Values,{Key,SymPosition,[{X1,Y1}|Best_moves],Worst_moves}),
 							io:format("Old values:~p~nNew Values: ~p~n",[Values,Values1]),
 							ets:delete(Gyrus,Key),
-							case Values1 of
-								[Tup] -> ets:insert(Gyrus,Tup);
-								[_|_] -> ets:insert(Gyrus,Values1)
-							end
+							ets:insert(Gyrus,Values1)
 					end
 			end
 	end.
@@ -116,7 +112,7 @@ save_worst_move(X,Y,Position,Key,Gyrus) ->
 		[] -> ets:insert(Gyrus,{Key,Position,[],[{X,Y}]});
 		Values -> 
 			case get_variant_values(Position,1,Values) of
-				not_found -> ets:insert(Gyrus,{Key,Position,[{X,Y}],[]});
+				not_found -> ets:insert(Gyrus,{Key,Position,[],[{X,Y}]});
 				{Var,SymPosition,Best_moves,Worst_moves} ->
 					{X1,Y1} = state:transform(X,Y,Var,Position),
 					case lists:member({X1,Y1},Worst_moves) of
@@ -125,10 +121,7 @@ save_worst_move(X,Y,Position,Key,Gyrus) ->
 							Values1 = lists:keyreplace(SymPosition,2,Values,{Key,SymPosition,Best_moves,[{X1,Y1}|Worst_moves]}),
 							ets:delete(Gyrus,Key),
 							io:format("Old values:~p~nNew Values: ~p~n",[Values,Values1]),
-							case Values1 of
-								[Tup] -> ets:insert(Gyrus,Tup);
-								[_|_] -> ets:insert(Gyrus,Values1)
-							end
+							ets:insert(Gyrus,Values1)
 					end
 			end
 	end.
