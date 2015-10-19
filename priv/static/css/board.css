@@ -38,7 +38,7 @@
     visibility: hidden;
     display: flex;
     justify-content: center; /* align horizontal */
-    align-items: center; /* align vertical */
+    align-items: text-top; /* align vertical */
     color:red;
     z-index: 2;
     font-size: 40px;
@@ -50,7 +50,7 @@
     width: 100%;
     top: 0;
     background-color: grey;
-    opacity: 0.6;
+    opacity: 0.9;
     visibility: hidden;
     display: flex;
     justify-content: center; /* align horizontal */
