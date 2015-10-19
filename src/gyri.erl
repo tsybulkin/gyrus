@@ -11,8 +11,13 @@
 
 init_gyri() ->
 	{ok,Files} = file:list_dir("data"),
-	lists:foreach(  fun(File)-> ets:file2tab(File)
-					end,Files).
+	lists:foreach(  fun(J)-> 
+						Gyrus = "gyrus"++integer_to_list(J),
+						case lists:member(Gyrus,Files) of
+							true -> ets:file2tab(Gyrus);
+							false-> ets:new(list_to_atom(Gyrus),[named_table,bag,public])
+						end
+					end,lists:seq(2,100)).
 
 
 
@@ -29,9 +34,9 @@ check_gyrus(J) -> Gyrus = bot:gyrus_name(J),
 	Tabs = ets:all(),
 	case lists:member(Gyrus,Tabs) of
 		true -> ok;
-		false-> ets:new(Gyrus,[named_table,bag])
+		false-> ets:new(Gyrus,[named_table,bag,public])
 	end.
 
 
 
-new_gyrus(J) -> ets:new(bot:gyrus_name(J),[named_table,bag]).
+new_gyrus(J) -> ets:new(bot:gyrus_name(J),[named_table,bag,public]).

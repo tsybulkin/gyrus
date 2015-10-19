@@ -166,7 +166,7 @@ change_state({Turn,Board},{I,J}) ->
 
 		_ ->
 			io:format("Illegal move: ~p~n",[{I,J}]),
-			Next_state = illegal_move
+			Next_state = illegal_state
 	end,
 
 	case lines:check_five(Next_state) of

@@ -13,13 +13,14 @@
 
 get_move(_Level,{1,_Board}) -> {8,8};
 get_move(Level,{Turn,_}=State) ->
-	gyri:check_gyrus(Turn),
+	%gyri:check_gyrus(Turn),
+	io:format("~n * * Turn:~p ~n",[Turn]),
 	case get_best_worst_state_moves(State) of
-		no_policy -> io:format("no_policy for state:~p~n",[State]),
+		no_policy -> io:format("no_policy ~n"),
 			Moves = moves:get_selected_moves(State),
-			%N = episodes_nbr(Level),
-			%get_best_simulation(Moves,State,N);
-			rand:pick_randomly(Moves);
+			N = episodes_nbr(Level),
+			io:format("doing simulations for moves: ~p~n",[Moves]),
+			get_best_simulation(Moves,State,N);
 			
 		{worst_moves,Worst_moves} -> 
 			io:format("Worst moves for state:~p~n~p~n",[State,Worst_moves]),
@@ -51,7 +52,8 @@ get_best_simulation(Moves,State,N) ->
 
 
 monte_carlo({Turn,_}=State,Moves,Simulation_Nbr) ->
-	Depth = 2*round(math:log(1+Simulation_Nbr)),
+	%Depth = 2*round(math:log(1+Simulation_Nbr)),
+	Depth = 3,
 	lists:sort( fun({A,_},{B,_})-> A>B end,lists:foldl(
 		fun(Move,Acc) ->
 			CumScore = 
@@ -67,22 +69,19 @@ monte_carlo({Turn,_}=State,Moves,Simulation_Nbr) ->
 
 
 run_episode(_State,0,_Move) -> 0;
-run_episode({Turn,_}=State,Depth,Move) ->
+run_episode(State,Depth,Move) ->
 	case game:change_state(State,Move) of
 		blacks_won -> learn(State,Move,-1),-1;
 		whites_won -> learn(State,Move, 1), 1;
 		draw -> 0;
 		Next_state -> 
-			gyri:check_gyrus(Turn+1),
+			%gyri:check_gyrus(Turn+1),
 			{NextMove,NextStateValue} = get_policy_value(Next_state),
 			learn(State,Move,NextStateValue),
 			run_episode(Next_state,Depth-1,NextMove)
 	end.
 
 
-
-%get_state_value(_State) -> 0.
-% NOT FINISHED
 
 
 %% ets table must be created as [named_table,bag]
@@ -122,7 +121,8 @@ save_best_move(X,Y,Position,Key,Gyrus) ->
 							ets:insert(Gyrus,Values1)
 					end
 			end
-	end.
+	end,
+	io:format("~p: ~p~n",[Gyrus,ets:lookup(Gyrus,Key)]).
 
 
 
@@ -145,7 +145,8 @@ save_worst_move(X,Y,Position,Key,Gyrus) ->
 							ets:insert(Gyrus,Values1)
 					end
 			end
-	end.
+	end,
+	io:format("~p: ~p~n",[Gyrus,ets:lookup(Gyrus,Key)]).
 
 
 
@@ -156,7 +157,7 @@ get_policy_value({Turn,_}=State) ->
 		{worst_moves,Worst_moves} -> 
 			io:format("Worst moves for state:~p~n~p~n",[State,Worst_moves]),
 			Moves = moves:get_selected_moves(State),
-			case lists:filter(fun(M)-> lists:member(M,Worst_moves) end, Moves) of
+			case lists:filter(fun(M)-> not lists:member(M,Worst_moves) end, Moves) of
 				[] -> io:format("NO GOOD MOVES~n"), {rand:pick_randomly(Moves),min_value(game:color(Turn))};
 				Good_moves -> {rand:pick_randomly(Good_moves),0}
 			end;
@@ -179,6 +180,7 @@ get_best_worst_state_moves({Turn,Board}) ->
 			case match_position(Position,1,Values) of
 				no_match -> no_policy;
 				{Type,Moves,Variant} -> 
+					io:format("Match found: ~p~n",[{Type,Moves,Variant}]),
 					case state:filter_legal(Moves,X0,Y0,Variant,Position,{Turn,Board}) of 
 						[] -> no_policy;
 						Filtered -> {Type,Filtered}
