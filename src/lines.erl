@@ -75,16 +75,14 @@ pick_5th(Color,{{X1,Y1},{X2,Y2},Stones}) ->
 
 			{X1+Dx*(Index-1),Y1+Dy*(Index-1)}
 	end.
-
 pick_5th(Me,[Me,Me,Me,Me,e|_],Index) -> Index + 4;
 pick_5th(Me,[Me,Me,Me,e,Me|_],Index) -> Index + 3;
 pick_5th(Me,[Me,Me,e,Me,Me|_],Index) -> Index + 2;
 pick_5th(Me,[Me,e,Me,Me,Me|_],Index) -> Index + 1;
 pick_5th(Me,[e,Me,Me,Me,Me|_],Index) -> Index;
-pick_5th(_,[_,_,_,_],_) -> not_found;
+pick_5th(_,Stones,_) when length(Stones)<5 -> not_found;
 pick_5th(Me,[_|Stones],Index) -> 
-	pick_5th(Me,Stones,Index+1);
-pick_5th(_,Stones,_) when length(Stones)<5 -> not_found.
+	pick_5th(Me,Stones,Index+1).
 
 
 
@@ -103,14 +101,14 @@ pick_4th(Me,[_|Stones],Index) -> pick_4th(Me,Stones,Index+1).
 
 
 
-
-find_4(Color, [Line|Lines]) -> 
+find_4(Color, Lines) -> find_4(Color,Lines,[]). 
+find_4(Color, [Line|Lines],Acc) -> 
 	case pick_5th(Color,Line) of
-		not_found ->
-			find_4(Color,Lines);
-		{X,Y} -> {X,Y}
+		not_found -> find_4(Color,Lines,Acc);
+		{X,Y} -> find_4(Color, Lines,[{X,Y}|Acc]) 
 	end;
-find_4(_,[]) -> not_found.
+find_4(_,[],[]) -> not_found;
+find_4(_,[],Acc) -> Acc.
 
 
 
@@ -127,7 +125,7 @@ find_covered3(_,[]) -> [].
 
 prevent_open3(Color,Lines) -> prevent_open3(Color,Lines,[]).
 prevent_open3(Color,[Line|Lines],Acc) -> prevent_open3(Color,Lines, close_3(Color,Line)++Acc);
-prevent_open3(Color,[],Acc) -> Acc.
+prevent_open3(_Color,[],Acc) -> Acc.
 
 
 

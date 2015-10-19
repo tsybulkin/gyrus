@@ -14,27 +14,44 @@
 get_move(_Level,{1,_Board}) -> {8,8};
 get_move(Level,{Turn,_}=State) ->
 	gyri:check_gyrus(Turn),
-	case moves:get_selected_moves(State) of
-		[Move] ->
-			io:format("One move selected~n"), 
-			run_episode(State,3,Move),
-			Move;
-		[_|_]=Moves ->
-			N = episodes_nbr(Level),
-			Scores = monte_carlo(State,Moves, N div length(Moves)),	
-			io:format("~nScores: ~p~n",[Scores]),
+	case get_best_worst_state_moves(State) of
+		no_policy -> io:format("no_policy for state:~p~n",[State]),
+			Moves = moves:get_selected_moves(State),
+			%N = episodes_nbr(Level),
+			%get_best_simulation(Moves,State,N);
+			rand:pick_randomly(Moves);
+			
+		{worst_moves,Worst_moves} -> 
+			io:format("Worst moves for state:~p~n~p~n",[State,Worst_moves]),
+			Moves = moves:get_selected_moves(State),
+			case lists:filter(fun(M)-> lists:member(M,Worst_moves) end, Moves) of
+				[] -> io:format("NO GOOD MOVES~n"), rand:pick_randomly(Moves);
+				Good_moves -> 
+					N = episodes_nbr(Level),
+					get_best_simulation(Good_moves,State,N)
+			end;
 
-			Best_moves = lists:sublist([XY || {_,XY}<-Scores],3),
-			Refined = monte_carlo(State,Best_moves, N div length(Best_moves)),	
-			io:format("~nRefined: ~p~n",[Refined]),
-
-			[{_,Move}|_] = Refined, Move
+		{best_moves,Best_moves} -> 
+			io:format("Best moves for state:~p~n~p~n",[State,Best_moves]),
+			rand:pick_randomly(Best_moves)
 	end.
 
 
 
+get_best_simulation(Moves,State,N) ->
+	Scores = monte_carlo(State,Moves, N div length(Moves)),	
+	io:format("~nScores: ~p~n",[Scores]),
+
+	Best_moves = lists:sublist([XY || {_,XY}<-Scores],3),
+	Refined = monte_carlo(State,Best_moves, N div length(Best_moves)),	
+	io:format("~nRefined: ~p~n",[Refined]),
+
+	[{_,Move}|_] = Refined, Move.
+
+
+
 monte_carlo({Turn,_}=State,Moves,Simulation_Nbr) ->
-	Depth = 2*round(math:log(Simulation_Nbr)),
+	Depth = 2*round(math:log(1+Simulation_Nbr)),
 	lists:sort( fun({A,_},{B,_})-> A>B end,lists:foldl(
 		fun(Move,Acc) ->
 			CumScore = 
@@ -87,12 +104,14 @@ learn({Turn,Board},{X,Y},Next_state_value) ->
 
 
 save_best_move(X,Y,Position,Key,Gyrus) ->
+	io:format("Saving best move: ~p at position ~p~n",[{X,Y},Position]),
 	case ets:lookup(Gyrus,Key) of
 		[] -> ets:insert(Gyrus,{Key,Position,[{X,Y}],[]});
 		Values -> 
 			case get_variant_values(Position,1,Values) of
 				not_found -> ets:insert(Gyrus,{Key,Position,[{X,Y}],[]});
 				{Var,SymPosition,Best_moves,Worst_moves} ->
+					io:format("Found: ~p~n",[{Var,SymPosition,Best_moves,Worst_moves}]),
 					{X1,Y1} = state:transform(X,Y,Var,Position),
 					case lists:member({X1,Y1},Best_moves) of
 						true -> ok;
@@ -108,12 +127,14 @@ save_best_move(X,Y,Position,Key,Gyrus) ->
 
 
 save_worst_move(X,Y,Position,Key,Gyrus) ->
+	io:format("Saving worst move: ~p at position ~p~n",[{X,Y},Position]),
 	case ets:lookup(Gyrus,Key) of
 		[] -> ets:insert(Gyrus,{Key,Position,[],[{X,Y}]});
 		Values -> 
 			case get_variant_values(Position,1,Values) of
 				not_found -> ets:insert(Gyrus,{Key,Position,[],[{X,Y}]});
 				{Var,SymPosition,Best_moves,Worst_moves} ->
+					io:format("Found: ~p~n",[{Var,SymPosition,Best_moves,Worst_moves}]),
 					{X1,Y1} = state:transform(X,Y,Var,Position),
 					case lists:member({X1,Y1},Worst_moves) of
 						true -> ok;
@@ -130,14 +151,18 @@ save_worst_move(X,Y,Position,Key,Gyrus) ->
 
 get_policy_value({Turn,_}=State) ->
 	case get_best_worst_state_moves(State) of
-		no_policy -> {rand:pick_randomly(moves:get_selected_moves(State)),0};
+		no_policy -> io:format("no_policy for state:~p~n",[State]),
+			{rand:pick_randomly(moves:get_selected_moves(State)),0};
 		{worst_moves,Worst_moves} -> 
+			io:format("Worst moves for state:~p~n~p~n",[State,Worst_moves]),
 			Moves = moves:get_selected_moves(State),
 			case lists:filter(fun(M)-> lists:member(M,Worst_moves) end, Moves) of
 				[] -> io:format("NO GOOD MOVES~n"), {rand:pick_randomly(Moves),min_value(game:color(Turn))};
 				Good_moves -> {rand:pick_randomly(Good_moves),0}
 			end;
-		{best_moves,Best_moves} -> {rand:pick_randomly(Best_moves),max_value(game:color(Turn))}
+		{best_moves,Best_moves} -> 
+			io:format("Best moves for state:~p~n~p~n",[State,Best_moves]),
+			{rand:pick_randomly(Best_moves),max_value(game:color(Turn))}
 	end.
 
 
@@ -147,7 +172,9 @@ get_best_worst_state_moves({Turn,Board}) ->
 	Key = state:get_key(Position),
 	Gyrus = gyrus_name(Turn),
 	case ets:lookup(Gyrus,Key) of
-		[] -> no_policy;
+		[] ->
+			io:format("no Key found for ~p~n",[{X0,Y0,Position}]), 
+			no_policy;
 		Values -> 
 			case match_position(Position,1,Values) of
 				no_match -> no_policy;
@@ -199,7 +226,7 @@ max_value(whites) -> 1.
 
 
 
-episodes_nbr(easy)  -> ?NBR_EPISODES;
-episodes_nbr(medium)-> ?NBR_EPISODES*5;
-episodes_nbr(hard)  -> ?NBR_EPISODES*20.
+episodes_nbr(easy)  -> 3;
+episodes_nbr(medium)-> ?NBR_EPISODES;
+episodes_nbr(hard)  -> ?NBR_EPISODES*5.
 

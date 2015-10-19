@@ -33,7 +33,7 @@ get_selected_moves({Turn,Board}) ->
 					end;
 				Ms -> Ms
 			end;
-		{X,Y} -> [{X,Y}]
+		Moves -> Moves
 	end.
 
 
@@ -42,14 +42,14 @@ get_mat(Own,Opp,Lines) ->
 	case lines:find_4(Own,Lines) of
 		not_found -> 
 			case lines:find_4(Opp,Lines) of
-				not_found ->
+				[] ->
 					case lines:find_open3(Own,Lines) of
 						[] -> not_found;
-						Moves -> rand:pick_randomly(Moves)
+						Moves -> Moves
 					end;
-				{X,Y} -> {X,Y}
+				Moves -> Moves
 			end;
-		{X,Y} -> {X,Y}
+		Moves -> Moves
 	end.
 
 
