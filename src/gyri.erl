@@ -25,7 +25,11 @@ save_gyri() ->
 	Named = lists:filter(fun(Tab)-> is_atom(Tab) end, ets:all() ),
 	Gyri = lists:filter(fun(Tab)-> lists:sublist(atom_to_list(Tab),5)=="gyrus" end, Named),
 	io:format("Next tabs are about to save: ~n~p~n",[Gyri]),
-	lists:foreach(  fun(Tab)-> ets:tab2file(Tab,"data/"++atom_to_list(Tab))
+	lists:foreach(  fun(Tab)-> 
+						case ets:info(Tab,size)>0 of
+							true -> ets:tab2file(Tab,"data/"++atom_to_list(Tab),[{extended_info,[object_count]}]);
+							false-> io:format("ets table ~p is empty~n",[Tab])
+						end
 					end,Gyri).
 
 

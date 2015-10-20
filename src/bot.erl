@@ -77,6 +77,7 @@ run_episode(State,Depth,Move) ->
 		Next_state -> 
 			%gyri:check_gyrus(Turn+1),
 			{NextMove,NextStateValue} = get_policy_value(Next_state),
+			io:format("State:~p, Move: ~p~nNextState:~p, Value:~p, Next_move:~p~n",[State,Move,Next_state,NextStateValue,NextMove]),
 			learn(State,Move,NextStateValue),
 			run_episode(Next_state,Depth-1,NextMove)
 	end.

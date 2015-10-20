@@ -18,7 +18,7 @@ function Board(parent, cellSize, callback) {
 
   var thinking = document.createElement('div');
   thinking.className = 'thinking';
-  thinking.innerHTML = 'Bot is thinking...';
+  thinking.innerHTML = 'Your opponent\'s ply...';
   board.appendChild(thinking);
   this.thinking = function() {
     thinking.style.visibility = 'visible';

@@ -34,7 +34,7 @@
     width: 100%;
     top: 0;
     background-color: grey;
-    opacity: 0.8;
+    opacity: 0.2;
     visibility: hidden;
     display: flex;
     justify-content: center; /* align horizontal */
@@ -50,7 +50,7 @@
     width: 100%;
     top: 0;
     background-color: grey;
-    opacity: 0.9;
+    opacity: 0.1;
     visibility: hidden;
     display: flex;
     justify-content: center; /* align horizontal */
