@@ -39,37 +39,37 @@ get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,_}=State) -
 
 		{best_moves,Best_moves} -> 
 			io:format("Best moves:~p~n for",[Best_moves]), state:print_state(State),
+			learn(OppPrevState,OppPrevMove,min_value(game:color(Turn-1))),
 			rand:pick_randomly(Best_moves)
 	end.
 
 
 
 get_best_simulation(PrevState,PrevMove,Moves,State,N) ->
-	Scores = monte_carlo(State,Moves, N div length(Moves)),	
+	Scores = monte_carlo(PrevState,PrevMove,State,Moves, N div length(Moves)),	
 	io:format("~nScores: ~p~n",[Scores]),
 
 	Best_moves = lists:sublist([XY || {_,XY}<-Scores],3),
 	N_per_move = N div length(Best_moves),
-	Refined = monte_carlo(State,Best_moves, N_per_move),	
+	Refined = monte_carlo(PrevState,PrevMove,State,Best_moves, N_per_move),	
 	io:format("~nRefined: ~p~n",[Refined]),
 
 	[{Score,Move}|_] = Refined,
 	if abs(Score) =:= N_per_move -> 
 		learn(State,Move,Score div N_per_move),
-		learn(PrevState,PrevMove,-(Score div N_per_move)); 
+		learn(PrevState,PrevMove,Score div N_per_move); 
 		true -> ok 
 	end,
 	Move.
 
 
 
-monte_carlo({Turn,_}=State,Moves,Simulation_Nbr) ->
-	%Depth = 2*round(math:log(1+Simulation_Nbr)),
-	Depth = 4,
+monte_carlo(PrevState,PrevMove,{Turn,_}=State,Moves,Simulation_Nbr) ->
+	Depth = 1+round(1.6 * math:log(1+Simulation_Nbr) ),
 	lists:sort( fun({A,_},{B,_})-> A>B end,lists:foldl(
 		fun(Move,Acc) ->
 			CumScore = 
-			lists:foldl(fun(_,ScoreAcc)-> run_episode(State,Depth,Move)+ScoreAcc
+			lists:foldl(fun(_,ScoreAcc)-> run_episode(PrevState,PrevMove,State,Depth,Move)+ScoreAcc
 						end,0,lists:seq(1,Simulation_Nbr)),
 			case game:color(Turn) of
 				blacks -> [{-CumScore,Move}|Acc];
@@ -80,10 +80,10 @@ monte_carlo({Turn,_}=State,Moves,Simulation_Nbr) ->
 
 
 
-run_episode(State,Depth,Move) ->
+run_episode(PrevState,PrevMove,State,Depth,Move) ->
 	case game:change_state(State,Move) of
-		blacks_won -> learn(State,Move,-1),-1;
-		whites_won -> learn(State,Move, 1), 1;
+		blacks_won -> learn(State,Move,-1),learn(PrevState,PrevMove,-1),-1;
+		whites_won -> learn(State,Move, 1),learn(PrevState,PrevMove, 1), 1;
 		draw -> 0;
 		Next_state -> 
 			%gyri:check_gyrus(Turn+1),
@@ -92,9 +92,10 @@ run_episode(State,Depth,Move) ->
 			io:format("Move:~p Value:~p, Next_move:~p~n",[Move,NextStateValue,NextMove]),
 			state:print_state(Next_state),
 			learn(State,Move,NextStateValue),
+			learn(PrevState,PrevMove,NextStateValue),
 			case {Depth,NextStateValue} of
 				{1,0} -> 0;
-				{_,0} -> run_episode(Next_state,Depth-1,NextMove);
+				{_,0} -> run_episode(State,Move,Next_state,Depth-1,NextMove);
 				{_,V} -> V
 			end
 	end.
@@ -104,6 +105,7 @@ run_episode(State,Depth,Move) ->
 
 %% ets table must be created as [named_table,bag]
 learn(_,_,0) -> ok;
+learn({1,_},_,Val) -> io:format("game solved!~nblacks won: ~p~n",[Val]), error(game_solved);
 learn({Turn,Board},{X,Y},Next_state_value) ->
 	{X0,Y0,Position} = state:board_to_position(Board),
 	X1=X-X0, Y1=Y-Y0,
@@ -246,7 +248,7 @@ max_value(whites) -> 1.
 
 
 
-episodes_nbr(easy)  -> 5;
+episodes_nbr(easy)  -> 12;
 episodes_nbr(medium)-> ?NBR_EPISODES;
 episodes_nbr(hard)  -> ?NBR_EPISODES*5.
 
