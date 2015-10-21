@@ -25,7 +25,7 @@ get_move(Level,{Turn,_}=State) ->
 		{worst_moves,Worst_moves} -> 
 			io:format("Worst moves for state:~p~n~p~n",[State,Worst_moves]),
 			Moves = moves:get_selected_moves(State),
-			case lists:filter(fun(M)-> lists:member(M,Worst_moves) end, Moves) of
+			case lists:filter(fun(M)-> not lists:member(M,Worst_moves) end, Moves) of
 				[] -> io:format("NO GOOD MOVES~n"), rand:pick_randomly(Moves);
 				Good_moves -> 
 					N = episodes_nbr(Level),
@@ -33,7 +33,7 @@ get_move(Level,{Turn,_}=State) ->
 			end;
 
 		{best_moves,Best_moves} -> 
-			io:format("Best moves for state:~p~n~p~n",[State,Best_moves]),
+			io:format("Best moves:~p~n for",[Best_moves]), state:print_state(State),
 			rand:pick_randomly(Best_moves)
 	end.
 
@@ -44,16 +44,19 @@ get_best_simulation(Moves,State,N) ->
 	io:format("~nScores: ~p~n",[Scores]),
 
 	Best_moves = lists:sublist([XY || {_,XY}<-Scores],3),
-	Refined = monte_carlo(State,Best_moves, N div length(Best_moves)),	
+	N_per_move = N div length(Best_moves),
+	Refined = monte_carlo(State,Best_moves, N_per_move),	
 	io:format("~nRefined: ~p~n",[Refined]),
 
-	[{_,Move}|_] = Refined, Move.
+	[{Score,Move}|_] = Refined,
+	if abs(Score) =:= N_per_move -> learn(State,Move,Score div N_per_move); true -> ok end,
+	Move.
 
 
 
 monte_carlo({Turn,_}=State,Moves,Simulation_Nbr) ->
 	%Depth = 2*round(math:log(1+Simulation_Nbr)),
-	Depth = 3,
+	Depth = 4,
 	lists:sort( fun({A,_},{B,_})-> A>B end,lists:foldl(
 		fun(Move,Acc) ->
 			CumScore = 
@@ -68,7 +71,6 @@ monte_carlo({Turn,_}=State,Moves,Simulation_Nbr) ->
 
 
 
-run_episode(_State,0,_Move) -> 0;
 run_episode(State,Depth,Move) ->
 	case game:change_state(State,Move) of
 		blacks_won -> learn(State,Move,-1),-1;
@@ -77,9 +79,15 @@ run_episode(State,Depth,Move) ->
 		Next_state -> 
 			%gyri:check_gyrus(Turn+1),
 			{NextMove,NextStateValue} = get_policy_value(Next_state),
-			io:format("State:~p, Move: ~p~nNextState:~p, Value:~p, Next_move:~p~n",[State,Move,Next_state,NextStateValue,NextMove]),
+			state:print_state(State),
+			io:format("Move:~p Value:~p, Next_move:~p~n",[Move,NextStateValue,NextMove]),
+			state:print_state(Next_state),
 			learn(State,Move,NextStateValue),
-			run_episode(Next_state,Depth-1,NextMove)
+			case {Depth,NextStateValue} of
+				{1,0} -> 0;
+				{_,0} -> run_episode(Next_state,Depth-1,NextMove);
+				{_,V} -> V
+			end
 	end.
 
 
@@ -229,7 +237,7 @@ max_value(whites) -> 1.
 
 
 
-episodes_nbr(easy)  -> 3;
+episodes_nbr(easy)  -> 5;
 episodes_nbr(medium)-> ?NBR_EPISODES;
 episodes_nbr(hard)  -> ?NBR_EPISODES*5.
 

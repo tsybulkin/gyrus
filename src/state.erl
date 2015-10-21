@@ -5,7 +5,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -module(state).
--export([init_state/0, init_state1/0, t/0,
+-export([init_state/0, init_state1/0, t/0, print_board/1, print_state/1,
 		board_to_position/1,
 		get_key/1,
 		next_variant/2,
@@ -77,7 +77,7 @@ get_key(Position) ->
 filter_legal(Moves,X0,Y0,Variant,Position,{Turn,Board}) -> 
 	lists:foldl(fun({X,Y},Acc)-> 
 					{X1,Y1} = back_transform(X,Y,Variant,Position),
-					case legal_place(X0+X1,Y0+Y1,{Turn,Board},[X0,Y0,Variant,Position]) of
+					case legal_place(X0+X1,Y0+Y1,{Turn,Board}) of
 						true -> [{X0+X1,Y0+Y1}|Acc]; 
 						false-> Acc 
 					end
@@ -85,11 +85,11 @@ filter_legal(Moves,X0,Y0,Variant,Position,{Turn,Board}) ->
 
 
 
-legal_place(X,Y,{Turn,Board},Args) when X<1; X>15; Y<1; Y>15 -> false;
-legal_place(X,Y,{Turn,Board},Args) -> 
+legal_place(X,Y,{_Turn,_Board}) when X<1; X>15; Y<1; Y>15 -> false;
+legal_place(X,Y,{Turn,Board}) -> 
 	case moves:legal_move({X,Y},Board) of
 		false ->
-			io:format("XY=~p, Turn:~p,Board=~p~nArgs:~p~n",[{X,Y},Turn,Board,Args]),
+			io:format("XY=~p, Turn:~p,Board=~p~n",[{X,Y},Turn,Board]),
 			error(error);
 		true -> true
 	end.
@@ -137,6 +137,34 @@ back_transform(X,Y,1,_Cx,_Cy) -> {X,Y};
 back_transform(X,Y,2,Cx,_Cy) -> {Y,Cx-X};
 back_transform(X,Y,3,Cx,Cy) -> {Cx-X,Cy-Y};
 back_transform(X,Y,4,_Cx,Cy) -> {Cy-Y, X}.
+
+
+
+print_state({Turn,Board}) -> io:format("Turn:~p~n",[Turn]), print_board(Board).
+
+
+
+print_board(Board) ->
+	Rows = lists:reverse(tuple_to_list(Board)),
+	print_rows(15,Rows),
+	io:format("  1 2 3 4 5 6 7 8 9 0 1 2 3 4 5~n~n").
+
+print_rows(N,[Row|Rows]) ->
+	print_stones(" " ++ integer_to_list(N rem 10), tuple_to_list(Row)),
+	print_rows(N-1,Rows);
+print_rows(_,[]) -> ok.
+	%io:format("~n").
+
+
+print_stones(Acc,[Stone|Stones]) ->
+	case Stone of
+		e -> print_stones("|-"++Acc,Stones);
+		b -> print_stones("X-"++Acc,Stones);
+		w -> print_stones("O-"++Acc,Stones)
+	end;
+print_stones(Acc,[]) ->
+	[E1,E2,_|Tile] = lists:reverse(Acc),
+	io:format("~s~n",[[E1,E2|Tile]]).
 
 
 
