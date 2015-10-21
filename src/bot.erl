@@ -5,14 +5,14 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -module(bot).
--export([get_move/2, gyrus_name/1
+-export([get_move/6, gyrus_name/1
 		]).
 
 -define(NBR_EPISODES,50).
 
 
-get_move(_Level,{1,_Board}) -> {8,8};
-get_move(Level,{Turn,_}=State) ->
+get_move(_Level,_,_,_,_,{1,_Board}) -> {8,8};
+get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,_}=State) ->
 	%gyri:check_gyrus(Turn),
 	io:format("~n * * Turn:~p ~n",[Turn]),
 	case get_best_worst_state_moves(State) of

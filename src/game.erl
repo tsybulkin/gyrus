@@ -115,18 +115,20 @@ game_manager(Schedule,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone) ->
 start_new_game(Schedule,GS,Level,blacks,WS) -> %% run Agent vs. Bot
 	% bot plays for blacks
 	State = state:init_state(),
-	run_game(Schedule,GS,Level,State,blacks,WS);
+	run_game(Schedule,GS,Level,none,none,none,none,State,blacks,WS);
 start_new_game(Schedule,GS,Level,whites,WS) -> %% run Agent vs. Bot
 	% bot plays for whites
 	State = state:init_state1(),
-	run_game(Schedule,GS,Level,State,whites,WS).
+	OppPrevState = state:init_state(),
+	OppPrevMove = {8,8},
+	run_game(Schedule,GS,Level,none,none,OppPrevState,OppPrevMove,State,whites,WS).
 
 
 
-run_game(Schedule,GS,Level,{Turn,_Board}=State,Color,WS) ->
+run_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,_Board}=State,Color,WS) ->
 	case color(Turn) =:= Color of
 		true -> % your move
-			Move = bot:get_move(Level,State),
+			Move = bot:get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,State),
 			io:format("Bot move:~p, State:~p~n",[Move,State]),
 			%Move = rand:rand(State),
 			case change_state(State,Move) of
@@ -134,7 +136,7 @@ run_game(Schedule,GS,Level,{Turn,_Board}=State,Color,WS) ->
 				whites_won -> GS ! {game_over, WS, self(), Move, man_lost}, gyri:save_gyri();
 				draw -> GS ! {game_over, WS, self(), Move, draw}, gyri:save_gyri();
 				NextState -> GS ! {bot_move, WS, self(), Move},
-					run_game(Schedule,GS,Level,NextState,Color,WS)
+					run_game(Schedule,GS,Level,OppPrevState,OppPrevMove,State,Move,NextState,Color,WS)
 			end;
 		false->  % Opponent's move
 			receive
@@ -145,7 +147,7 @@ run_game(Schedule,GS,Level,{Turn,_Board}=State,Color,WS) ->
 						blacks_won -> GS ! {game_over, WS, self(), man_won}, gyri:save_gyri();
 						whites_won -> GS ! {game_over, WS, self(), man_won}, gyri:save_gyri();
 						draw -> GS ! {game_over, WS, self(), draw}, gyri:save_gyri();
-						NextState -> run_game(Schedule,GS,Level,NextState,Color,WS)
+						NextState -> run_game(Schedule,GS,Level,OppPrevState,OppPrevMove,State,Move,NextState,Color,WS)
 					end
 			end
 	end.
