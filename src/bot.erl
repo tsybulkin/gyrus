@@ -20,16 +20,21 @@ get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,_}=State) -
 			Moves = moves:get_selected_moves(State),
 			N = episodes_nbr(Level),
 			io:format("doing simulations for moves: ~p~n",[Moves]),
-			get_best_simulation(Moves,State,N);
+			get_best_simulation(OppPrevState,OppPrevMove,Moves,State,N);
 			
 		{worst_moves,Worst_moves} -> 
 			io:format("Worst moves for state:~p~n~p~n",[State,Worst_moves]),
 			Moves = moves:get_selected_moves(State),
 			case lists:filter(fun(M)-> not lists:member(M,Worst_moves) end, Moves) of
-				[] -> io:format("NO GOOD MOVES~n"), rand:pick_randomly(Moves);
+				[] -> io:format("NO GOOD MOVES~n"),
+					io:format("Opponent's previous move: ~p was the best~n",[OppPrevMove]),
+					io:format("My previous move: ~p was the worst~n",[MyPrevMove]),
+					learn(OppPrevState,OppPrevMove,max_value(game:color(Turn-1))),
+					learn(MyPrevState,MyPrevMove,min_value(game:color(Turn-2))),
+					rand:pick_randomly(Moves);
 				Good_moves -> 
 					N = episodes_nbr(Level),
-					get_best_simulation(Good_moves,State,N)
+					get_best_simulation(OppPrevState,OppPrevMove,Good_moves,State,N)
 			end;
 
 		{best_moves,Best_moves} -> 
@@ -39,7 +44,7 @@ get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,_}=State) -
 
 
 
-get_best_simulation(Moves,State,N) ->
+get_best_simulation(PrevState,PrevMove,Moves,State,N) ->
 	Scores = monte_carlo(State,Moves, N div length(Moves)),	
 	io:format("~nScores: ~p~n",[Scores]),
 
@@ -49,7 +54,11 @@ get_best_simulation(Moves,State,N) ->
 	io:format("~nRefined: ~p~n",[Refined]),
 
 	[{Score,Move}|_] = Refined,
-	if abs(Score) =:= N_per_move -> learn(State,Move,Score div N_per_move); true -> ok end,
+	if abs(Score) =:= N_per_move -> 
+		learn(State,Move,Score div N_per_move),
+		learn(PrevState,PrevMove,-(Score div N_per_move)); 
+		true -> ok 
+	end,
 	Move.
 
 
