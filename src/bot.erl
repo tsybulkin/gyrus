@@ -55,11 +55,11 @@ get_best_simulation(PrevState,PrevMove,Moves,State,N) ->
 	io:format("~nRefined: ~p~n",[Refined]),
 
 	[{Score,Move}|_] = Refined,
-	if abs(Score) =:= N_per_move -> 
-		learn(State,Move,Score div N_per_move),
-		learn(PrevState,PrevMove,Score div N_per_move); 
-		true -> ok 
-	end,
+	%if abs(Score) =:= N_per_move -> 
+	%	learn(State,Move,Score div N_per_move),
+	%	learn(PrevState,PrevMove,Score div N_per_move); 
+	%	true -> ok 
+	%end,
 	Move.
 
 
