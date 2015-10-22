@@ -54,7 +54,7 @@ get_best_simulation(PrevState,PrevMove,Moves,State,N) ->
 	Refined = monte_carlo(PrevState,PrevMove,State,Best_moves, N_per_move),	
 	io:format("~nRefined: ~p~n",[Refined]),
 
-	[{Score,Move}|_] = Refined,
+	[{_,Move}|_] = Refined,
 	%if abs(Score) =:= N_per_move -> 
 	%	learn(State,Move,Score div N_per_move),
 	%	learn(PrevState,PrevMove,Score div N_per_move); 
@@ -66,6 +66,7 @@ get_best_simulation(PrevState,PrevMove,Moves,State,N) ->
 
 monte_carlo(PrevState,PrevMove,{Turn,_}=State,Moves,Simulation_Nbr) ->
 	Depth = 1+round(1.6 * math:log(1+Simulation_Nbr) ),
+	io:format("Monte carlo over: ~p~n",[Moves]),
 	lists:sort( fun({A,_},{B,_})-> A>B end,lists:foldl(
 		fun(Move,Acc) ->
 			CumScore = 
@@ -88,9 +89,9 @@ run_episode(PrevState,PrevMove,State,Depth,Move) ->
 		Next_state -> 
 			%gyri:check_gyrus(Turn+1),
 			{NextMove,NextStateValue} = get_policy_value(Next_state),
-			state:print_state(State),
+			%state:print_state(State),
 			io:format("Move:~p Value:~p, Next_move:~p~n",[Move,NextStateValue,NextMove]),
-			state:print_state(Next_state),
+			%state:print_state(Next_state),
 			learn(State,Move,NextStateValue),
 			learn(PrevState,PrevMove,NextStateValue),
 			case {Depth,NextStateValue} of
@@ -111,7 +112,7 @@ learn({Turn,Board},{X,Y},Next_state_value) ->
 	X1=X-X0, Y1=Y-Y0,
 	Key = state:get_key(Position),	
 	Gyrus = gyrus_name(Turn),
-	io:format("learning at state:~p(~p) that move:~p leads to ~p~n",[game:color(Turn),Turn,{X,Y},Next_state_value]),
+	%io:format("learning at state:~p(~p) that move:~p leads to ~p~n",[game:color(Turn),Turn,{X,Y},Next_state_value]),
 
 	case {game:color(Turn),Next_state_value} of
 		{blacks,1} -> save_worst_move(X1,Y1,Position,Key,Gyrus);
@@ -123,20 +124,20 @@ learn({Turn,Board},{X,Y},Next_state_value) ->
 
 
 save_best_move(X,Y,Position,Key,Gyrus) ->
-	io:format("Saving best move: ~p at position ~p~n",[{X,Y},Position]),
+	%io:format("Saving best move: ~p at position ~p~n",[{X,Y},Position]),
 	case ets:lookup(Gyrus,Key) of
 		[] -> ets:insert(Gyrus,{Key,Position,[{X,Y}],[]});
 		Values -> 
 			case get_variant_values(Position,1,Values) of
 				not_found -> ets:insert(Gyrus,{Key,Position,[{X,Y}],[]});
 				{Var,SymPosition,Best_moves,Worst_moves} ->
-					io:format("Found: ~p~n",[{Var,SymPosition,Best_moves,Worst_moves}]),
+					%io:format("Found: ~p~n",[{Var,SymPosition,Best_moves,Worst_moves}]),
 					{X1,Y1} = state:transform(X,Y,Var,Position),
 					case lists:member({X1,Y1},Best_moves) of
 						true -> ok;
 						false->
 							Values1 = lists:keyreplace(SymPosition,2,Values,{Key,SymPosition,[{X1,Y1}|Best_moves],Worst_moves}),
-							io:format("Old values:~p~nNew Values: ~p~n",[Values,Values1]),
+							%io:format("Old values:~p~nNew Values: ~p~n",[Values,Values1]),
 							ets:delete(Gyrus,Key),
 							ets:insert(Gyrus,Values1)
 					end
@@ -147,32 +148,32 @@ save_best_move(X,Y,Position,Key,Gyrus) ->
 
 
 save_worst_move(X,Y,Position,Key,Gyrus) ->
-	io:format("Saving worst move: ~p at position ~p~n",[{X,Y},Position]),
+	%io:format("Saving worst move: ~p at position ~p~n",[{X,Y},Position]),
 	case ets:lookup(Gyrus,Key) of
 		[] -> ets:insert(Gyrus,{Key,Position,[],[{X,Y}]});
 		Values -> 
 			case get_variant_values(Position,1,Values) of
 				not_found -> ets:insert(Gyrus,{Key,Position,[],[{X,Y}]});
 				{Var,SymPosition,Best_moves,Worst_moves} ->
-					io:format("Found: ~p~n",[{Var,SymPosition,Best_moves,Worst_moves}]),
+					%io:format("Found: ~p~n",[{Var,SymPosition,Best_moves,Worst_moves}]),
 					{X1,Y1} = state:transform(X,Y,Var,Position),
 					case lists:member({X1,Y1},Worst_moves) of
 						true -> ok;
 						false->
 							Values1 = lists:keyreplace(SymPosition,2,Values,{Key,SymPosition,Best_moves,[{X1,Y1}|Worst_moves]}),
 							ets:delete(Gyrus,Key),
-							io:format("Old values:~p~nNew Values: ~p~n",[Values,Values1]),
+							%io:format("Old values:~p~nNew Values: ~p~n",[Values,Values1]),
 							ets:insert(Gyrus,Values1)
 					end
 			end
-	end,
-	io:format("~p: ~p~n",[Gyrus,ets:lookup(Gyrus,Key)]).
+	end.
+	%io:format("~p: ~p~n",[Gyrus,ets:lookup(Gyrus,Key)]).
 
 
 
 get_policy_value({Turn,_}=State) ->
 	case get_best_worst_state_moves(State) of
-		no_policy -> io:format("no_policy for state:~p~n",[State]),
+		no_policy -> %io:format("no_policy for state:~p~n",[State]),
 			{rand:pick_randomly(moves:get_selected_moves(State)),0};
 		{worst_moves,Worst_moves} -> 
 			io:format("Worst moves for state:~p~n~p~n",[State,Worst_moves]),
@@ -194,13 +195,13 @@ get_best_worst_state_moves({Turn,Board}) ->
 	Gyrus = gyrus_name(Turn),
 	case ets:lookup(Gyrus,Key) of
 		[] ->
-			io:format("no Key found for ~p~n",[{X0,Y0,Position}]), 
+			%io:format("no Key found for ~p~n",[{X0,Y0,Position}]), 
 			no_policy;
 		Values -> 
 			case match_position(Position,1,Values) of
 				no_match -> no_policy;
 				{Type,Moves,Variant} -> 
-					io:format("Match found: ~p~n",[{Type,Moves,Variant}]),
+					%io:format("Match found: ~p~n",[{Type,Moves,Variant}]),
 					case state:filter_legal(Moves,X0,Y0,Variant,Position,{Turn,Board}) of 
 						[] -> no_policy;
 						Filtered -> {Type,Filtered}
@@ -210,7 +211,8 @@ get_best_worst_state_moves({Turn,Board}) ->
 	
 
 
-match_position(_Position,-1,_Values) -> io:format("no_match found~n"),no_match;
+match_position(_Position,-1,_Values) -> %io:format("no_match found~n"),
+	no_match;
 match_position(Position,Variant,Values) ->
 	case lists:keyfind(Position,2,Values) of
 		false -> 
