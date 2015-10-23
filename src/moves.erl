@@ -112,7 +112,7 @@ scan_line(Stones,Index,Row,Color,Acc) when length(Row)=:=5 ->
 	Row1 = lists:droplast(Row),
 	case length(lists:filter(fun(S)-> S=/=e end,Row1)) of
 		0 -> scan_line(Stones,Index,Row1,undef,Acc);
-		_ -> scan_line(Stones,Index,Row1,Color,rate_row(Row,Index,Acc))
+		_ -> scan_line(Stones,Index,Row1,Color,rate_row(Row,Index-1,Acc))
 	end;
 	
 scan_line([e|Stones],Index,Row,undef,Acc) -> scan_line(Stones,Index+1,[e|Row],undef,Acc);
@@ -130,10 +130,9 @@ take_e([e|Row],Acc) -> take_e(Row,[e|Acc]);
 take_e(_,Acc) -> Acc.
 
 
-rate_row(Row,Index,Acc) -> rate_row(Row,Index-1,Acc,length(lists:filter(fun(S)-> S=/=e end,Row) )).
-rate_row([e|Row],Index,Acc,V) -> rate_row(Row,Index-1,[{Index,V}|Acc],V);
-rate_row([_|Row],Index,Acc,V) -> rate_row(Row,Index-1,Acc,V);
-rate_row([],_,Acc,_) -> Acc.
+rate_row([e|Row],Index,Acc) -> rate_row(Row,Index-1,[{Index,1}|Acc]);
+rate_row([_|Row],Index,Acc) -> rate_row(Row,Index-1,Acc);
+rate_row([],_,Acc) -> Acc.
 
 
 %get_good_moves(Own,Opp,Lines) -> get_good_moves([],Own,Opp,Lines).
