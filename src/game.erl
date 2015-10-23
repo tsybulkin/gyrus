@@ -9,12 +9,13 @@
 -export([game_manager/1,
 		game_manager/7,
     game_manager_call/1,
-		start_new_game/5,
+		start_new_game/5, start_new_bot_game/2,
 		change_state/2,
 		color/1
 		]).
 
--define(CONCURRENT_GAMES_LIMIT, 11).
+-define(HUMAN_BOT_GAMES_LIMIT, 4).
+-define(BOT_BOT_GAMES_LIMIT, 2).
 
 start_link() ->
 	Schedule = [],
@@ -29,11 +30,12 @@ game_manager_call(Request) ->
 
 game_manager(Schedule) -> game_manager(Schedule,[],0,0,0,0,0).
 
-game_manager(Schedule,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone) ->
+game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone) ->
+	io:format(" Games: ~p~n Players: ~p~n",[Human_bot_games,Bot_bot_gameNBR]),
 	receive
 		{new_game_request, WS, Color, Level} ->
 			io:format("~p~n", [{new_game_request, WS, Color, Level}]),
-			case CurrPlayersNbr < ?CONCURRENT_GAMES_LIMIT of
+			case length(Human_bot_games) < ?HUMAN_BOT_GAMES_LIMIT of
 				true ->
 					GS = self(),
 					case Color of
@@ -44,71 +46,93 @@ game_manager(Schedule,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone) ->
 							Game_id = spawn(?MODULE,start_new_game,[Schedule,GS,Level,blacks,WS]),
 							WS ! {start_new_game, state:init_state(), whites, Game_id}
 					end,
-					game_manager(Schedule,[Game_id|CurrGames],CurrPlayersNbr+1,Won,Draw,Lost,GamesDone);
+					game_manager(Schedule,[Game_id|Human_bot_games],Bot_bot_gameNBR,Won,Draw,Lost,GamesDone);
 				
 				false ->
-					WS ! too_many_players,
-					game_manager(Schedule,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone)
+					WS ! {too_many_players,length(Human_bot_games)+Bot_bot_gameNBR},
+					game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone)
 			end;
 
 		{player_move, WS, Game, Move} ->
-			case lists:member(Game, CurrGames) of
+			case lists:member(Game, Human_bot_games) of
 				true -> Game ! {move, Move};
 
 				false -> WS ! {game_not_exists, Game}
 			end,
-			game_manager(Schedule,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone);
+			game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone);
 
 		{bot_move, WS, Game, Move} ->
-			case lists:member(Game, CurrGames) of
+			case lists:member(Game, Human_bot_games) of
 				true -> WS ! {bot_move, Move};
 
 				false -> Game ! quit
 			end,
-			game_manager(Schedule,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone);
+			game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone);
 
 		{connection_closed, Game} ->
-			CurrGames1 = lists:delete(Game,CurrGames),
-			Game ! quit,
-			game_manager(Schedule,CurrGames1,CurrPlayersNbr-1,Won+1,Draw,Lost,GamesDone+1);
+			Human_bot_games1 = lists:delete(Game,Human_bot_games),
+			case length(Human_bot_games) =:= length(Human_bot_games1) of
+				true -> game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone);
+				false->
+					Game ! quit,
+					game_manager(Schedule,Human_bot_games1,Bot_bot_gameNBR,Won+1,Draw,Lost,GamesDone+1)
+			end;
 
 		
 		{game_over,WS,Game,man_won} ->
 			WS ! {game_over, man_won},
-			CurrGames1 = lists:delete(Game,CurrGames),
-			game_manager(Schedule,CurrGames1,CurrPlayersNbr-1,Won,Draw,Lost+1,GamesDone+1);
+			Human_bot_games1 = lists:delete(Game,Human_bot_games),
+			game_manager(Schedule,Human_bot_games1,Bot_bot_gameNBR,Won,Draw,Lost+1,GamesDone+1);
 		
 		{game_over,WS,Game,draw} ->
 			WS ! {game_over, draw},
-			CurrGames1 = lists:delete(Game,CurrGames),
-			game_manager(Schedule,CurrGames1,CurrPlayersNbr-1,Won,Draw+1,Lost,GamesDone+1);
+			Human_bot_games1 = lists:delete(Game,Human_bot_games),
+			game_manager(Schedule,Human_bot_games1,Bot_bot_gameNBR,Won,Draw+1,Lost,GamesDone+1);
 
 		{game_over,WS,Game,Last_move,man_lost} ->
 			WS ! {game_over, Last_move, man_lost},
-			CurrGames1 = lists:delete(Game,CurrGames),
-			game_manager(Schedule,CurrGames1,CurrPlayersNbr-1,Won+1,Draw,Lost,GamesDone+1);
+			Human_bot_games1 = lists:delete(Game,Human_bot_games),
+			game_manager(Schedule,Human_bot_games1,Bot_bot_gameNBR,Won+1,Draw,Lost,GamesDone+1);
 			
 		{game_over,WS,Game,Last_move,draw} ->
 			WS ! {game_over, Game, Last_move, draw},
-			CurrGames1 = lists:delete(Game,CurrGames),
-			game_manager(Schedule,CurrGames1,CurrPlayersNbr-1,Won,Draw+1,Lost,GamesDone+1);
+			Human_bot_games1 = lists:delete(Game,Human_bot_games),
+			game_manager(Schedule,Human_bot_games1,Bot_bot_gameNBR,Won,Draw+1,Lost,GamesDone+1);
 		
-		{game_over,WS,Game,_Last_move,bot_game} ->
-			CurrGames1 = lists:delete(Game,CurrGames),
-			game_manager(Schedule,CurrGames1,CurrPlayersNbr-2,Won,Draw,Lost,GamesDone+1);
+		bot_game_over ->
+			game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR-1,Won,Draw,Lost,GamesDone+1);
 
 		%% TODO: delete this
 		Err -> throw(Err)
 		
-%% 	after
-%% 		1000 ->
-%% 			if CurrPlayersNbr < ?CONCURRENT_GAMES_LIMIT ->
-%% 				spawn(?MODULE,start_new_game,[Schedule]),
-%% 				game_manager(Schedule,CurrGames,CurrPlayersNbr+2,Won,Draw,Lost,GamesDone);
-%% 			true ->
-%% 				game_manager(Schedule,CurrGames,CurrPlayersNbr,Won,Draw,Lost,GamesDone)
-%% 			end
+ 	after
+ 		1000 ->
+ 			if Bot_bot_gameNBR < ?BOT_BOT_GAMES_LIMIT ->
+ 				GS = self(),
+ 				spawn(?MODULE,start_new_bot_game,[Schedule,GS]),
+ 				game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR+1,Won,Draw,Lost,GamesDone);
+ 			true ->
+ 				game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone)
+ 			end
 	end.
+
+
+
+start_new_bot_game(Schedule,GS) ->
+	State = state:init_state(),
+	run_bot_game(Schedule,GS,hard,none,none,none,none,State).
+
+run_bot_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,State) ->
+	Move = bot:get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,State),
+	io:format("Bot move:~p, State:~p~n",[Move,State]),
+	%Move = rand:rand(State),
+	case change_state(State,Move) of
+		blacks_won -> GS ! bot_game_over;
+		whites_won -> GS ! bot_game_over;
+		draw -> GS ! bot_game_over;
+		NextState -> run_bot_game(Schedule,GS,Level,OppPrevState,OppPrevMove,State,Move,NextState)
+	end.
+
 
 
 
@@ -122,7 +146,6 @@ start_new_game(Schedule,GS,Level,whites,WS) -> %% run Agent vs. Bot
 	OppPrevState = state:init_state(),
 	OppPrevMove = {8,8},
 	run_game(Schedule,GS,Level,none,none,OppPrevState,OppPrevMove,State,whites,WS).
-
 
 
 run_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,_Board}=State,Color,WS) ->

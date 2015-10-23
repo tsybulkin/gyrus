@@ -16,10 +16,10 @@ get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,_}=State) -
 	%gyri:check_gyrus(Turn),
 	io:format("~n * * Turn:~p ~n",[Turn]),
 	case get_best_worst_state_moves(State) of
-		no_policy -> io:format("no_policy ~n"),
+		no_policy -> %io:format("no_policy ~n"),
 			Moves = moves:get_selected_moves(State),
 			N = episodes_nbr(Level),
-			io:format("doing simulations for moves: ~p~n",[Moves]),
+			%io:format("doing simulations for moves: ~p~n",[Moves]),
 			get_best_simulation(OppPrevState,OppPrevMove,Moves,State,N);
 			
 		{worst_moves,Worst_moves} -> 
@@ -66,7 +66,7 @@ get_best_simulation(PrevState,PrevMove,Moves,State,N) ->
 
 monte_carlo(PrevState,PrevMove,{Turn,_}=State,Moves,Simulation_Nbr) ->
 	Depth = 1+round(1.6 * math:log(1+Simulation_Nbr) ),
-	io:format("Monte carlo over: ~p~n",[Moves]),
+	%io:format("Monte carlo over: ~p~n",[Moves]),
 	lists:sort( fun({A,_},{B,_})-> A>B end,lists:foldl(
 		fun(Move,Acc) ->
 			CumScore = 
@@ -90,7 +90,7 @@ run_episode(PrevState,PrevMove,State,Depth,Move) ->
 			%gyri:check_gyrus(Turn+1),
 			{NextMove,NextStateValue} = get_policy_value(Next_state),
 			%state:print_state(State),
-			io:format("Move:~p Value:~p, Next_move:~p~n",[Move,NextStateValue,NextMove]),
+			%io:format("Move:~p Value:~p, Next_move:~p~n",[Move,NextStateValue,NextMove]),
 			%state:print_state(Next_state),
 			learn(State,Move,NextStateValue),
 			learn(PrevState,PrevMove,NextStateValue),
@@ -176,14 +176,14 @@ get_policy_value({Turn,_}=State) ->
 		no_policy -> %io:format("no_policy for state:~p~n",[State]),
 			{rand:pick_randomly(moves:get_selected_moves(State)),0};
 		{worst_moves,Worst_moves} -> 
-			io:format("Worst moves for state:~p~n~p~n",[State,Worst_moves]),
+			%io:format("Worst moves for state:~p~n~p~n",[State,Worst_moves]),
 			Moves = moves:get_selected_moves(State),
 			case lists:filter(fun(M)-> not lists:member(M,Worst_moves) end, Moves) of
 				[] -> io:format("NO GOOD MOVES~n"), {rand:pick_randomly(Moves),min_value(game:color(Turn))};
 				Good_moves -> {rand:pick_randomly(Good_moves),0}
 			end;
 		{best_moves,Best_moves} -> 
-			io:format("Best moves for state:~p~n~p~n",[State,Best_moves]),
+			%io:format("Best moves for state:~p~n~p~n",[State,Best_moves]),
 			{rand:pick_randomly(Best_moves),max_value(game:color(Turn))}
 	end.
 
