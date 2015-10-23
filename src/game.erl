@@ -14,8 +14,8 @@
 		color/1
 		]).
 
--define(HUMAN_BOT_GAMES_LIMIT, 4).
--define(BOT_BOT_GAMES_LIMIT, 2).
+-define(HUMAN_BOT_GAMES_LIMIT, 5).
+-define(BOT_BOT_GAMES_LIMIT, 3).
 
 start_link() ->
 	Schedule = [],
@@ -31,7 +31,8 @@ game_manager_call(Request) ->
 game_manager(Schedule) -> game_manager(Schedule,[],0,0,0,0,0).
 
 game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone) ->
-	io:format(" Games: ~p~n Players: ~p~n",[Human_bot_games,Bot_bot_gameNBR]),
+	io:format("Human-Bot games: ~p  Bot-Bot games: ~p Total games played: ~p~n",
+		[length(Human_bot_games),Bot_bot_gameNBR, GamesDone]),
 	receive
 		{new_game_request, WS, Color, Level} ->
 			io:format("~p~n", [{new_game_request, WS, Color, Level}]),
@@ -124,7 +125,7 @@ start_new_bot_game(Schedule,GS) ->
 
 run_bot_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,State) ->
 	Move = bot:get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,State),
-	io:format("Bot move:~p, State:~p~n",[Move,State]),
+	%io:format("Bot move:~p, State:~p~n",[Move,State]),
 	%Move = rand:rand(State),
 	case change_state(State,Move) of
 		blacks_won -> GS ! bot_game_over;
@@ -152,7 +153,7 @@ run_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn
 	case color(Turn) =:= Color of
 		true -> % your move
 			Move = bot:get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,State),
-			io:format("Bot move:~p, State:~p~n",[Move,State]),
+			%io:format("Bot move:~p, State:~p~n",[Move,State]),
 			%Move = rand:rand(State),
 			case change_state(State,Move) of
 				blacks_won -> GS ! {game_over, WS, self(), Move, man_lost}, gyri:save_gyri();
@@ -165,7 +166,7 @@ run_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn
 			receive
 				quit -> ok;		
 				{move, Move} ->
-					io:format("Human move:~p, State:~p~n",[Move,State]),
+					%io:format("Human move:~p, State:~p~n",[Move,State]),
 					case change_state(State,Move) of
 						blacks_won -> GS ! {game_over, WS, self(), man_won}, gyri:save_gyri();
 						whites_won -> GS ! {game_over, WS, self(), man_won}, gyri:save_gyri();

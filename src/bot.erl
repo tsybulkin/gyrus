@@ -8,13 +8,13 @@
 -export([get_move/6, gyrus_name/1
 		]).
 
--define(NBR_EPISODES,50).
+-define(NBR_EPISODES,100).
 
 
 get_move(_Level,_,_,_,_,{1,_Board}) -> {8,8};
 get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,_}=State) ->
 	%gyri:check_gyrus(Turn),
-	io:format("~n * * Turn:~p ~n",[Turn]),
+	%io:format("~n * * Turn:~p ~n",[Turn]),
 	case get_best_worst_state_moves(State) of
 		no_policy -> %io:format("no_policy ~n"),
 			Moves = moves:get_selected_moves(State),
@@ -23,12 +23,12 @@ get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,_}=State) -
 			get_best_simulation(OppPrevState,OppPrevMove,Moves,State,N);
 			
 		{worst_moves,Worst_moves} -> 
-			io:format("Worst moves for state:~p~n~p~n",[State,Worst_moves]),
+			%io:format("Worst moves for state:~p~n~p~n",[State,Worst_moves]),
 			Moves = moves:get_selected_moves(State),
 			case lists:filter(fun(M)-> not lists:member(M,Worst_moves) end, Moves) of
-				[] -> io:format("NO GOOD MOVES~n"),
-					io:format("Opponent's previous move: ~p was the best~n",[OppPrevMove]),
-					io:format("My previous move: ~p was the worst~n",[MyPrevMove]),
+				[] -> %io:format("NO GOOD MOVES~n"),
+					%io:format("Opponent's previous move: ~p was the best~n",[OppPrevMove]),
+					%io:format("My previous move: ~p was the worst~n",[MyPrevMove]),
 					learn(OppPrevState,OppPrevMove,max_value(game:color(Turn-1))),
 					learn(MyPrevState,MyPrevMove,min_value(game:color(Turn-2))),
 					rand:pick_randomly(Moves);
@@ -38,21 +38,21 @@ get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,_}=State) -
 			end;
 
 		{best_moves,Best_moves} -> 
-			io:format("Best moves:~p~n for",[Best_moves]), state:print_state(State),
+			%io:format("Best moves:~p~n for",[Best_moves]), state:print_state(State),
 			learn(OppPrevState,OppPrevMove,min_value(game:color(Turn-1))),
 			rand:pick_randomly(Best_moves)
 	end.
 
 
 
-get_best_simulation(PrevState,PrevMove,Moves,State,N) ->
+get_best_simulation(PrevState,PrevMove,Moves,{Turn,_}=State,N) ->
 	Scores = monte_carlo(PrevState,PrevMove,State,Moves, N div length(Moves)),	
-	io:format("~nScores: ~p~n",[Scores]),
+	%io:format("~nScores: ~p~n",[Scores]),
 
 	Best_moves = lists:sublist([XY || {_,XY}<-Scores],3),
 	N_per_move = N div length(Best_moves),
 	Refined = monte_carlo(PrevState,PrevMove,State,Best_moves, N_per_move),	
-	io:format("~nRefined: ~p~n",[Refined]),
+	io:format("Turn:~p  Refined moves: ~p~n",[Turn,Refined]),
 
 	[{_,Move}|_] = Refined,
 	%if abs(Score) =:= N_per_move -> 
@@ -106,7 +106,7 @@ run_episode(PrevState,PrevMove,State,Depth,Move) ->
 
 %% ets table must be created as [named_table,bag]
 learn(_,_,0) -> ok;
-learn({1,_},_,Val) -> io:format("game solved!~nblacks won: ~p~n",[Val]), error(game_solved);
+learn({1,_},_,Val) -> io:format("game solved!~nblacks won: ~p~n",[Val]);
 learn({Turn,Board},{X,Y},Next_state_value) ->
 	{X0,Y0,Position} = state:board_to_position(Board),
 	X1=X-X0, Y1=Y-Y0,
@@ -142,8 +142,8 @@ save_best_move(X,Y,Position,Key,Gyrus) ->
 							ets:insert(Gyrus,Values1)
 					end
 			end
-	end,
-	io:format("~p: ~p~n",[Gyrus,ets:lookup(Gyrus,Key)]).
+	end.
+	%io:format("~p: ~p~n",[Gyrus,ets:lookup(Gyrus,Key)]).
 
 
 
@@ -179,7 +179,7 @@ get_policy_value({Turn,_}=State) ->
 			%io:format("Worst moves for state:~p~n~p~n",[State,Worst_moves]),
 			Moves = moves:get_selected_moves(State),
 			case lists:filter(fun(M)-> not lists:member(M,Worst_moves) end, Moves) of
-				[] -> io:format("NO GOOD MOVES~n"), {rand:pick_randomly(Moves),min_value(game:color(Turn))};
+				[] -> {rand:pick_randomly(Moves),min_value(game:color(Turn))};
 				Good_moves -> {rand:pick_randomly(Good_moves),0}
 			end;
 		{best_moves,Best_moves} -> 
@@ -250,7 +250,7 @@ max_value(whites) -> 1.
 
 
 
-episodes_nbr(easy)  -> 12;
+episodes_nbr(easy)  -> 21;
 episodes_nbr(medium)-> ?NBR_EPISODES;
 episodes_nbr(hard)  -> ?NBR_EPISODES*5.
 
