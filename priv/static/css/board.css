@@ -3,6 +3,12 @@
   display: inline-block;    // div not larger than its contents
 }
 
+.board_background {
+  padding: 20px;
+  background-color: rgb(251,234,173);
+  display: inline-block;
+}
+
 .board table {
     background-color: rgb(251,234,173);
     table-layout: fixed;

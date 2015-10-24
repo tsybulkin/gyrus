@@ -7,10 +7,16 @@ function Board(parent, cellSize, callback) {
   var x = 0, y = 0;
   var matrix = _.map(_.range(15), function() { return _.map(_.range(15), function() {return false}) } );
 
+
+  // create background dom element
+  var background = document.createElement('div');
+  background.className = 'board_background';
+  parent.appendChild(background);
+
   // create parent dom element
   var board = document.createElement('div');
   board.className = 'board';
-  parent.appendChild(board);
+  background.appendChild(board);
   this.div = board;
 
   var table = document.createElement('table');
@@ -140,6 +146,7 @@ function BoardConnection(board, baseUrl, color, level) {
   };
   ws.onerror = function(err) {
     alert('ws error: ' + err);
+    console.log('ws error: ' + err);
   };
   this.ws = ws;
 
