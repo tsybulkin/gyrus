@@ -14,8 +14,8 @@
 		color/1
 		]).
 
--define(HUMAN_BOT_GAMES_LIMIT, 5).
--define(BOT_BOT_GAMES_LIMIT, 3).
+-define(HUMAN_BOT_GAMES_LIMIT, 2).
+-define(BOT_BOT_GAMES_LIMIT, 2).
 
 start_link() ->
 	Schedule = [],
