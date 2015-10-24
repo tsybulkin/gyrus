@@ -14,7 +14,7 @@ init_gyri() ->
 	lists:foreach(  fun(J)-> 
 						Gyrus = "gyrus"++integer_to_list(J),
 						case lists:member(Gyrus,Files) of
-							true -> ets:file2tab(Gyrus);
+							true -> {ok,_}=ets:file2tab(Gyrus);
 							false-> ets:new(list_to_atom(Gyrus),[named_table,bag,public])
 						end
 					end,lists:seq(2,100)).
