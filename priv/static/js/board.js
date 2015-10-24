@@ -1,10 +1,11 @@
 function Board(parent, cellSize, callback) {
 
-    var self = this;
+  var self = this;
   var size = 14;
   active = typeof active !== 'undefined' ? active : false;
   // Mouse coordinates
   var x = 0, y = 0;
+  var matrix = _.map(_.range(15), function() { return _.map(_.range(15), function() {return false}) } );
 
   // create parent dom element
   var board = document.createElement('div');
@@ -62,7 +63,8 @@ function Board(parent, cellSize, callback) {
       ch.style.left = cell_size*(x-1) - ch_size/2 + x + 'px';
       ch.style.bottom = cell_size*(y-1) - ch_size/2 + y + 'px';
       this.div.appendChild(ch);
-    }
+      matrix[x-1][y-1] = true;
+    };
 
   if (callback) {
     var ch = document.createElement('div');
@@ -82,9 +84,10 @@ function Board(parent, cellSize, callback) {
 
     }
 
-    function _handleClick() {
-      // TODO: check if empty
-      callback(x,y);
+    function _handleClick() { 
+      if (!matrix[x-1][y-1]) {
+      	callback(x,y);
+      }
     }
 
     table.onmousemove = _handleMouseMove;
