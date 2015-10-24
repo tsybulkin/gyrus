@@ -109,10 +109,10 @@ rate_line({{X1,Y1},{X2,Y2},Stones}) ->
 	[ { {X1+Dx*(Index-1),Y1+Dy*(Index-1)}, R} || {Index,R} <- Rated_moves].
 
 scan_line(Stones,Index,Row,Color,Acc) when length(Row)=:=5 -> 
-	[_|Mid3] = Row1 = lists:droplast(Row), 
+	Row1 = lists:droplast(Row), 
 	case length(lists:filter(fun(S)-> S=/=e end,Row)) of
 		0 -> scan_line(Stones,Index,Row1,undef,Acc);
-		_ -> scan_line(Stones,Index,Row1,Color,rate_row(Mid3,Index-2,Acc))
+		_ -> scan_line(Stones,Index,Row1,Color,rate_row(Row,Index-1,Acc))
 	end;
 	
 scan_line([e|Stones],Index,Row,undef,Acc) -> scan_line(Stones,Index+1,[e|Row],undef,Acc);
@@ -136,12 +136,12 @@ rate_row([],_,Acc) -> Acc.
 
 
 
-pick_best(Ls,_Thr) when length(Ls)=<11 -> [XY ||{XY,_} <- Ls];
+pick_best(Ls,_Thr) when length(Ls)=<12 -> [XY ||{XY,_} <- Ls];
 pick_best(Ls,Thr) ->
 	Ls1 = lists:filter(fun({_,X})-> X>Thr end, Ls),
 	if
-		length(Ls1)>11 -> pick_best(Ls1,Thr+1);
-		length(Ls1)<5 -> [XY ||{XY,_} <- Ls];
+		length(Ls1)>12 -> pick_best(Ls1,Thr+1);
+		length(Ls1)<7 -> [XY ||{XY,_} <- Ls];
 		true -> [XY ||{XY,_} <- Ls1]
 	end.
 

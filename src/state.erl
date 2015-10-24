@@ -10,6 +10,7 @@
 		get_key/1,
 		next_variant/2,
 		back_transform/4, transform/4,
+		reflect/2,
 		filter_legal/6
 		]).
 
@@ -74,10 +75,10 @@ get_key(Position) ->
 
 
 
-filter_legal(Moves,X0,Y0,Variant,Position,{Turn,Board}) -> 
+filter_legal(Moves,X0,Y0,Variant,Position,State) -> 
 	lists:foldl(fun({X,Y},Acc)-> 
 					{X1,Y1} = back_transform(X,Y,Variant,Position),
-					case legal_place(X0+X1,Y0+Y1,{Turn,Board}) of
+					case legal_place(X0+X1,Y0+Y1,State) of
 						true -> [{X0+X1,Y0+Y1}|Acc]; 
 						false-> Acc 
 					end
@@ -113,8 +114,10 @@ reflect(Position,Var) -> {list_to_tuple(lists:reverse(tuple_to_list(Position))),
 
 
 transform(X,Y,Variant,Position) ->
-	Cy = size(Position) + 1,
-	Cx = size(element(1,Position)) + 1,
+	case Variant rem 2 of
+		0 -> Cx = size(Position) + 1, Cy = size(element(1,Position)) + 1;
+		_ -> Cy = size(Position) + 1, Cx = size(element(1,Position)) + 1
+	end, 
 	case Variant < 0 of
 		true -> transform(X,Cy-Y,-Variant,Cx,Cy);
 		false-> transform(X,Y,Variant,Cx,Cy)
@@ -127,8 +130,10 @@ transform(X,Y,2,_Cx,Cy) -> {Cy-Y, X}.
 
 
 back_transform(X,Y,Variant,Position) ->
-	Cy = size(Position) + 1,
-	Cx = size(element(1,Position)) + 1,
+	case Variant rem 2 of
+		0 -> Cx = size(Position) + 1, Cy = size(element(1,Position)) + 1;
+		_ -> Cy = size(Position) + 1, Cx = size(element(1,Position)) + 1
+	end, 
 	case Variant < 0 of
 		true -> back_transform(X,Cy-Y,-Variant,Cx,Cy);
 		false-> back_transform(X,Y,Variant,Cx,Cy)

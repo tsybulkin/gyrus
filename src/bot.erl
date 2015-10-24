@@ -106,6 +106,7 @@ run_episode(PrevState,PrevMove,State,Depth,Move) ->
 
 %% ets table must be created as [named_table,bag]
 learn(_,_,0) -> ok;
+learn(none,none,-1) -> ok;
 learn({1,_},_,Val) -> io:format("game solved!~nblacks won: ~p~n",[Val]);
 learn({Turn,Board},{X,Y},Next_state_value) ->
 	{X0,Y0,Position} = state:board_to_position(Board),
@@ -201,7 +202,11 @@ get_best_worst_state_moves({Turn,Board}) ->
 			case match_position(Position,1,Values) of
 				no_match -> no_policy;
 				{Type,Moves,Variant} -> 
-					%io:format("Match found: ~p~n",[{Type,Moves,Variant}]),
+					if Variant=/=1 -> 
+						io:format("Match found: ~p~n",[{Type,Moves,Variant}]),
+						state:print_board(Board);
+						true->ok 
+					end,
 					case state:filter_legal(Moves,X0,Y0,Variant,Position,{Turn,Board}) of 
 						[] -> no_policy;
 						Filtered -> {Type,Filtered}
@@ -211,16 +216,26 @@ get_best_worst_state_moves({Turn,Board}) ->
 	
 
 
-match_position(_Position,-1,_Values) -> %io:format("no_match found~n"),
-	no_match;
 match_position(Position,Variant,Values) ->
 	case lists:keyfind(Position,2,Values) of
 		false -> 
-			{Position1,Next_var} = state:next_variant(Position,Variant),
-			match_position(Position1,Next_var,Values);
+			case Variant of
+				-1 -> no_match;
+				_  ->
+					{Position1,Next_var} = state:next_variant(Position,Variant),
+					match_position(Position1,Next_var,Values)
+			end;
 
-		{_,Position,[],Worst} -> {worst_moves,Worst,Variant};
-		{_,Position,Best,_} -> {best_moves,Best,Variant}
+		{_,Position,[],Worst} -> 
+			if Variant=/=1 -> 
+						io:format("Position: ~p~n",[Position]); 
+						true->ok 
+					end, {worst_moves,Worst,Variant};
+		{_,Position,Best,_} -> 
+			if Variant=/=1 -> 
+						io:format("Position: ~p~n",[Position]); 
+						true->ok 
+					end,{best_moves,Best,Variant}
 	end.
 
 
