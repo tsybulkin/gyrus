@@ -122,7 +122,7 @@ scan_line([S|Stones],Index,Row,S,Acc) -> scan_line(Stones,Index+1,[S|Row],S,Acc)
 scan_line([S|Stones],Index,Row,_,Acc) -> 
 	E_row = take_e(Row),
 	scan_line(Stones,Index+1,[S|E_row],S,Acc);
-scan_line([],_,_,_,Acc) -> group(lists:sort(Acc)).
+scan_line([],_,_,_,Acc) -> [ {Ind,math:sqrt(R)} || {Ind,R}<- group(lists:sort(Acc))].
 
 
 take_e(Row) -> take_e(Row,[]).

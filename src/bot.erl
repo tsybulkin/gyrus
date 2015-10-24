@@ -12,7 +12,8 @@
 
 
 get_move(_Level,_,_,_,_,{1,_Board}) -> {8,8};
-get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,_}=State) ->
+get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,Board}=State) ->
+	%state:print_board(Board),
 	%gyri:check_gyrus(Turn),
 	%io:format("~n * * Turn:~p ~n",[Turn]),
 	case get_best_worst_state_moves(State) of
@@ -31,15 +32,19 @@ get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,_}=State) -
 					%io:format("My previous move: ~p was the worst~n",[MyPrevMove]),
 					learn(OppPrevState,OppPrevMove,max_value(game:color(Turn-1))),
 					learn(MyPrevState,MyPrevMove,min_value(game:color(Turn-2))),
+					io:format("Turn:~p Losing moves:~p~n",[Turn,Moves]),
 					rand:pick_randomly(Moves);
 				Good_moves -> 
 					N = episodes_nbr(Level),
-					get_best_simulation(OppPrevState,OppPrevMove,Good_moves,State,N)
+					Move = get_best_simulation(OppPrevState,OppPrevMove,Good_moves,State,N),
+					io:format("\tLosing moves:~p~n",[Turn,Moves]),
+					Move
 			end;
 
 		{best_moves,Best_moves} -> 
 			%io:format("Best moves:~p~n for",[Best_moves]), state:print_state(State),
 			learn(OppPrevState,OppPrevMove,min_value(game:color(Turn-1))),
+			io:format("Turn:~p Winning moves:~p~n",[Turn,Moves])
 			rand:pick_randomly(Best_moves)
 	end.
 
@@ -65,7 +70,7 @@ get_best_simulation(PrevState,PrevMove,Moves,{Turn,_}=State,N) ->
 
 
 monte_carlo(PrevState,PrevMove,{Turn,_}=State,Moves,Simulation_Nbr) ->
-	Depth = 1+round(1.6 * math:log(1+Simulation_Nbr) ),
+	Depth = 1+round(2 * math:log(1+Simulation_Nbr) ),
 	%io:format("Monte carlo over: ~p~n",[Moves]),
 	lists:sort( fun({A,_},{B,_})-> A>B end,lists:foldl(
 		fun(Move,Acc) ->
@@ -107,7 +112,7 @@ run_episode(PrevState,PrevMove,State,Depth,Move) ->
 %% ets table must be created as [named_table,bag]
 learn(_,_,0) -> ok;
 learn(none,none,-1) -> ok;
-learn({1,_},_,Val) -> io:format("game solved!~nblacks won: ~p~n",[Val]);
+learn({1,_},Move,Val) -> io:format("~ngame solved for the move: ~p!~nblacks won: ~p~n",[Move,Val]);
 learn({Turn,Board},{X,Y},Next_state_value) ->
 	{X0,Y0,Position} = state:board_to_position(Board),
 	X1=X-X0, Y1=Y-Y0,
@@ -202,11 +207,11 @@ get_best_worst_state_moves({Turn,Board}) ->
 			case match_position(Position,1,Values) of
 				no_match -> no_policy;
 				{Type,Moves,Variant} -> 
-					if Variant=/=1 -> 
-						io:format("Match found: ~p~n",[{Type,Moves,Variant}]),
-						state:print_board(Board);
-						true->ok 
-					end,
+					%if Variant=/=1 -> 
+					%	io:format("Match found: ~p~n",[{Type,Moves,Variant}]),
+					%	state:print_board(Board);
+					%	true->ok 
+					%end,
 					case state:filter_legal(Moves,X0,Y0,Variant,Position,{Turn,Board}) of 
 						[] -> no_policy;
 						Filtered -> {Type,Filtered}

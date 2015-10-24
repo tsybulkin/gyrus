@@ -15,7 +15,7 @@
 		]).
 
 -define(HUMAN_BOT_GAMES_LIMIT, 2).
--define(BOT_BOT_GAMES_LIMIT, 2).
+-define(BOT_BOT_GAMES_LIMIT, 4).
 
 start_link() ->
 	Schedule = [],
@@ -31,8 +31,8 @@ game_manager_call(Request) ->
 game_manager(Schedule) -> game_manager(Schedule,[],0,0,0,0,0).
 
 game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone) ->
-	io:format("Human-Bot games: ~p  Bot-Bot games: ~p Total games played: ~p~n",
-		[length(Human_bot_games),Bot_bot_gameNBR, GamesDone]),
+	%io:format("Human-Bot games: ~p  Bot-Bot games: ~p Total games played: ~p~n",
+	%	[length(Human_bot_games),Bot_bot_gameNBR, GamesDone]),
 	receive
 		{new_game_request, WS, Color, Level} ->
 			io:format("~p~n", [{new_game_request, WS, Color, Level}]),
