@@ -5,7 +5,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -module(gyri).
--export([init_gyri/0, save_gyri/0, new_gyrus/1, check_gyrus/1
+-export([init_gyri/0, save_gyri/0, new_gyrus/1, check_gyrus/1, brain_size/0
 		]).
 
 
@@ -34,10 +34,10 @@ save_gyri() ->
 
 
 
-gyri:brain_size() ->
+brain_size() ->
 	Named = lists:filter(fun(Tab)-> is_atom(Tab) end, ets:all() ),
 	Gyri = lists:filter(fun(Tab)-> lists:sublist(atom_to_list(Tab),5)=="gyrus" end, Named),
-	lists:foldl(fun(Tab,Acc) -> ets:info(Tab,size)+Acc end).
+	lists:foldl(fun(Tab,Acc) -> ets:info(Tab,size)+Acc end,0,Gyri).
 
 
 

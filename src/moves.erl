@@ -136,12 +136,12 @@ rate_row([],_,Acc) -> Acc.
 
 
 
-pick_best(Ls,_Thr) when length(Ls)=<12 -> [XY ||{XY,_} <- Ls];
+pick_best(Ls,_Thr) when length(Ls)=<6 -> [XY ||{XY,_} <- Ls];
 pick_best(Ls,Thr) ->
 	Ls1 = lists:filter(fun({_,X})-> X>Thr end, Ls),
 	if
-		length(Ls1)>12 -> pick_best(Ls1,Thr+1);
-		length(Ls1)<7 -> [XY ||{XY,_} <- Ls];
+		length(Ls1)>6 -> pick_best(Ls1,Thr+1);
+		length(Ls1)<2 -> [XY ||{XY,_} <- Ls];
 		true -> [XY ||{XY,_} <- Ls1]
 	end.
 
