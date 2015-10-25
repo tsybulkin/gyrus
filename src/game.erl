@@ -101,6 +101,12 @@ game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone) -
 			game_manager(Schedule,Human_bot_games1,Bot_bot_gameNBR,Won,Draw+1,Lost,GamesDone+1);
 		
 		bot_game_over ->
+			Size = gyri:brain_size(),
+			if
+				Size > 1000000 -> io:format("Brain size:~p,000,000~n",[Size div 1000000]);
+				Size > 1000 -> io:format("Brain size:~p,000~n",[ Size div 1000]);
+				true -> io:format("Brain size:~p,000~n",[Size]);
+			end,
 			game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR-1,Won,Draw,Lost,GamesDone+1);
 
 		%% TODO: delete this

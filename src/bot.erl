@@ -12,7 +12,7 @@
 
 
 get_move(_Level,_,_,_,_,{1,_Board}) -> {8,8};
-get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,Board}=State) ->
+get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,_}=State) ->
 	%state:print_board(Board),
 	%gyri:check_gyrus(Turn),
 	%io:format("~n * * Turn:~p ~n",[Turn]),
@@ -32,19 +32,19 @@ get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,Board}=Stat
 					%io:format("My previous move: ~p was the worst~n",[MyPrevMove]),
 					learn(OppPrevState,OppPrevMove,max_value(game:color(Turn-1))),
 					learn(MyPrevState,MyPrevMove,min_value(game:color(Turn-2))),
-					io:format("Turn:~p Losing moves:~p~n",[Turn,Moves]),
+					io:format("  Turn:~p Losing moves:~p~n",[Turn,Moves]),
 					rand:pick_randomly(Moves);
 				Good_moves -> 
 					N = episodes_nbr(Level),
 					Move = get_best_simulation(OppPrevState,OppPrevMove,Good_moves,State,N),
-					io:format("\tLosing moves:~p~n",[Turn,Moves]),
+					io:format("    Losing moves:~p~n",[Worst_moves]),
 					Move
 			end;
 
 		{best_moves,Best_moves} -> 
 			%io:format("Best moves:~p~n for",[Best_moves]), state:print_state(State),
 			learn(OppPrevState,OppPrevMove,min_value(game:color(Turn-1))),
-			io:format("Turn:~p Winning moves:~p~n",[Turn,Moves])
+			io:format("  Turn:~p Winning moves:~p~n",[Turn,Best_moves]),
 			rand:pick_randomly(Best_moves)
 	end.
 
@@ -86,7 +86,7 @@ monte_carlo(PrevState,PrevMove,{Turn,_}=State,Moves,Simulation_Nbr) ->
 
 
 
-run_episode(PrevState,PrevMove,State,Depth,Move) ->
+run_episode(PrevState,PrevMove,{Turn,_}=State,Depth,Move) ->
 	case game:change_state(State,Move) of
 		blacks_won -> learn(State,Move,-1),learn(PrevState,PrevMove,-1),-1;
 		whites_won -> learn(State,Move, 1),learn(PrevState,PrevMove, 1), 1;
@@ -98,7 +98,11 @@ run_episode(PrevState,PrevMove,State,Depth,Move) ->
 			%io:format("Move:~p Value:~p, Next_move:~p~n",[Move,NextStateValue,NextMove]),
 			%state:print_state(Next_state),
 			learn(State,Move,NextStateValue),
-			learn(PrevState,PrevMove,NextStateValue),
+			case {game:color(Turn),NextStateValue} of
+				{blacks,-1} -> learn(PrevState,PrevMove,NextStateValue);
+				{whites, 1} -> learn(PrevState,PrevMove,NextStateValue);
+				_ -> do_nothing
+			end,
 			case {Depth,NextStateValue} of
 				{1,0} -> 0;
 				{_,0} -> run_episode(State,Move,Next_state,Depth-1,NextMove);
@@ -232,15 +236,17 @@ match_position(Position,Variant,Values) ->
 			end;
 
 		{_,Position,[],Worst} -> 
-			if Variant=/=1 -> 
-						io:format("Position: ~p~n",[Position]); 
-						true->ok 
-					end, {worst_moves,Worst,Variant};
+			%if Variant=/=1 -> 
+			%	io:format("Position: ~p~n",[Position]); 
+			%	true->ok 
+			%end, 
+			{worst_moves,Worst,Variant};
 		{_,Position,Best,_} -> 
-			if Variant=/=1 -> 
-						io:format("Position: ~p~n",[Position]); 
-						true->ok 
-					end,{best_moves,Best,Variant}
+			%if Variant=/=1 -> 
+			%			io:format("Position: ~p~n",[Position]); 
+			%			true->ok 
+			%end,
+			{best_moves,Best,Variant}
 	end.
 
 

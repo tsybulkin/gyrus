@@ -34,6 +34,13 @@ save_gyri() ->
 
 
 
+gyri:brain_size() ->
+	Named = lists:filter(fun(Tab)-> is_atom(Tab) end, ets:all() ),
+	Gyri = lists:filter(fun(Tab)-> lists:sublist(atom_to_list(Tab),5)=="gyrus" end, Named),
+	lists:foldl(fun(Tab,Acc) -> ets:info(Tab,size)+Acc end).
+
+
+
 check_gyrus(J) -> Gyrus = bot:gyrus_name(J),
 	Tabs = ets:all(),
 	case lists:member(Gyrus,Tabs) of
