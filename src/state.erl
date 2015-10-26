@@ -80,18 +80,21 @@ filter_legal(Moves,X0,Y0,Variant,Position,State) ->
 					{X1,Y1} = back_transform(X,Y,Variant,Position),
 					case legal_place(X0+X1,Y0+Y1,State) of
 						true -> [{X0+X1,Y0+Y1}|Acc]; 
-						false-> Acc 
+						false -> Acc; 
+						error -> 
+							io:format("Illegal move:~p, Variant:~p Position:~p~n",[{X,Y},Variant,Position]),
+							io:format("Back rotated coords:~p, Final:~p~n",[{X1,Y1},{X0+X1,Y0+Y1}]),
+							print_state(State),
+							error(error)
 					end
 				end,[],Moves).
 
 
 
 legal_place(X,Y,{_Turn,_Board}) when X<1; X>15; Y<1; Y>15 -> false;
-legal_place(X,Y,{Turn,Board}) -> 
+legal_place(X,Y,{_,Board}) -> 
 	case moves:legal_move({X,Y},Board) of
-		false ->
-			io:format("XY=~p, Turn:~p,Board=~p~n",[{X,Y},Turn,Board]),
-			error(error);
+		false -> error;
 		true -> true
 	end.
 
@@ -114,34 +117,28 @@ reflect(Position,Var) -> {list_to_tuple(lists:reverse(tuple_to_list(Position))),
 
 
 transform(X,Y,Variant,Position) ->
-	case Variant rem 2 of
-		0 -> Cx = size(Position) + 1, Cy = size(element(1,Position)) + 1;
-		_ -> Cy = size(Position) + 1, Cx = size(element(1,Position)) + 1
-	end, 
+	Cy = size(Position) + 1, Cx = size(element(1,Position)) + 1,
 	case Variant < 0 of
 		true -> transform(X,Cy-Y,-Variant,Cx,Cy);
 		false-> transform(X,Y,Variant,Cx,Cy)
 	end.
 transform(X,Y,1,_Cx,_Cy) -> {X,Y};
-transform(X,Y,4,Cx,_Cy) -> {Y,Cx-X};
+transform(X,Y,2,_Cx,Cy) -> {Y,Cy-X};
 transform(X,Y,3,Cx,Cy) -> {Cx-X,Cy-Y};
-transform(X,Y,2,_Cx,Cy) -> {Cy-Y, X}.
+transform(X,Y,4,Cx,_Cy) -> {Cx-Y, X}.
 
 
 
 back_transform(X,Y,Variant,Position) ->
-	case Variant rem 2 of
-		0 -> Cx = size(Position) + 1, Cy = size(element(1,Position)) + 1;
-		_ -> Cy = size(Position) + 1, Cx = size(element(1,Position)) + 1
-	end, 
+	Cy = size(Position) + 1, Cx = size(element(1,Position)) + 1,
 	case Variant < 0 of
 		true -> back_transform(X,Cy-Y,-Variant,Cx,Cy);
 		false-> back_transform(X,Y,Variant,Cx,Cy)
 	end.
 back_transform(X,Y,1,_Cx,_Cy) -> {X,Y};
-back_transform(X,Y,2,Cx,_Cy) -> {Y,Cx-X};
+back_transform(X,Y,4,_Cx,Cy) -> {Y,Cy-X};
 back_transform(X,Y,3,Cx,Cy) -> {Cx-X,Cy-Y};
-back_transform(X,Y,4,_Cx,Cy) -> {Cy-Y, X}.
+back_transform(X,Y,2,Cx,_Cy) -> {Cx-Y, X}.
 
 
 
