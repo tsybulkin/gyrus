@@ -47,7 +47,9 @@ t() ->
 	t1(position_extraction,B1),
 	t2(position_reflection,B1),
 	t3(position_rotation,B1),
-	t4(back_transformation,B2).
+	t4(back_transformation,B2),
+	t5(transform,B2),
+	t6(back_transform,B2).
 
 
 
@@ -90,5 +92,30 @@ t4(TestName,B2) ->
 	end.
 	
 
+t5(TestName,B2) ->
+	{X,Y}={3,0},
+	{7,5,Position} = state:board_to_position(B2),
+	Trans = [{2,{5,3}},{3,{1,5}},{4,{0,1}},{-4,{0,3}},{-3,{1,0}},{-2,{5,1}},{-1,{3,5}}],
+
+	lists:foreach(fun({Var,XY})-> 
+		case state:transform(X,Y,Var,Position) of
+			XY -> ok;
+			{Xt,Yt} -> io:format("variant ~p failed. ~p=/=~p~n",[Var,XY,{Xt,Yt}])
+		end
+	end,Trans).
+	
+
+t6(TestName,B2) ->
+	{X1,Y1}={3,0},
+	{7,5,Position} = state:board_to_position(B2),
+	BackTrans = [{2,{5,3}},{3,{1,5}},{4,{0,1}},{-4,{0,3}},{-3,{1,0}},{-2,{5,1}},{-1,{3,5}}],
+
+	lists:foreach(fun({Var,{X,Y}})-> 
+		case state:back_transform(X,Y,Var,Position) of
+			{X1,Y1} -> ok;
+			{Xt,Yt} -> io:format("variant ~p failed. ~p=/=~p~n",[Var,{X1,Y1},{Xt,Yt}])
+		end
+	end,BackTrans).
+	
 
 

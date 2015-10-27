@@ -115,32 +115,39 @@ next_variant(Position,Var) -> % rotation
 reflect(Position,Var) -> {list_to_tuple(lists:reverse(tuple_to_list(Position))),-Var}.
 
 
-
+% X,Y - local coords in Position. Returns new local coords in variant symetrical position
 transform(X,Y,Variant,Position) ->
 	Cy = size(Position) + 1, Cx = size(element(1,Position)) + 1,
 	case Variant < 0 of
-		true -> transform(X,Cy-Y,-Variant,Cx,Cy);
+		true -> {X1,Y1}=transform(X,Y,-Variant,Cx,Cy), {X1,cVar(Cx,Cy,Variant)-Y1};
 		false-> transform(X,Y,Variant,Cx,Cy)
 	end.
 transform(X,Y,1,_Cx,_Cy) -> {X,Y};
-transform(X,Y,2,_Cx,Cy) -> {Y,Cy-X};
+transform(X,Y,4,Cx,_Cy) -> {Y,Cx-X};
 transform(X,Y,3,Cx,Cy) -> {Cx-X,Cy-Y};
-transform(X,Y,4,Cx,_Cy) -> {Cx-Y, X}.
+transform(X,Y,2,_Cx,Cy) -> {Cy-Y, X}.
 
 
 
 back_transform(X,Y,Variant,Position) ->
 	Cy = size(Position) + 1, Cx = size(element(1,Position)) + 1,
 	case Variant < 0 of
-		true -> back_transform(X,Cy-Y,-Variant,Cx,Cy);
+		true -> back_transform(X,cVar(Cx,Cy,Variant)-Y,-Variant,Cx,Cy);
 		false-> back_transform(X,Y,Variant,Cx,Cy)
 	end.
 back_transform(X,Y,1,_Cx,_Cy) -> {X,Y};
-back_transform(X,Y,4,_Cx,Cy) -> {Y,Cy-X};
+back_transform(X,Y,2,_Cx,Cy) -> {Y,Cy-X};
 back_transform(X,Y,3,Cx,Cy) -> {Cx-X,Cy-Y};
-back_transform(X,Y,2,Cx,_Cy) -> {Cx-Y, X}.
+back_transform(X,Y,4,Cx,_Cy) -> {Cx-Y, X}.
 
 
+
+cVar(Cx,Cy,Variant) ->
+	case Variant rem 2 of
+		0 -> Cx;
+		_ -> Cy
+	end.
+	
 
 print_state({Turn,Board}) -> io:format("Turn:~p~n",[Turn]), print_board(Board).
 
