@@ -6,20 +6,20 @@
 
 -module(game).
 -export([start_link/0]).
--export([game_manager/1,
-		game_manager/7,
+-export([game_manager/7,
     game_manager_call/1,
-		start_new_game/5, start_new_bot_game/2,
+		start_new_game/5, start_new_bot_game/2, start_new_demo_game/2,
 		change_state/2,
 		color/1
 		]).
 
--define(HUMAN_BOT_GAMES_LIMIT, 2).
--define(BOT_BOT_GAMES_LIMIT, 4).
+-define(HUMAN_BOT_GAMES_LIMIT, 10).
+-define(BOT_BOT_GAMES_LIMIT, 3).
 
 start_link() ->
 	Schedule = [],
-	Pid = spawn_link(?MODULE, game_manager, [Schedule,[],0,0,0,0,0]),
+	Pid = spawn_link(?MODULE, game_manager, [Schedule,[],1,0,0,0,0]),
+	spawn(?MODULE,start_new_demo_game,[Schedule,Pid]),
 	gyri:init_gyri(),
 	true = register(game_manager, Pid),
 	{ok, Pid}.
@@ -28,7 +28,6 @@ game_manager_call(Request) ->
 	game_manager ! Request,
 	receive Response -> Response end.
 
-game_manager(Schedule) -> game_manager(Schedule,[],0,0,0,0,0).
 
 game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone) ->
 	%io:format("Human-Bot games: ~p  Bot-Bot games: ~p Total games played: ~p~n",
@@ -79,7 +78,6 @@ game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone) -
 					game_manager(Schedule,Human_bot_games1,Bot_bot_gameNBR,Won+1,Draw,Lost,GamesDone+1)
 			end;
 
-		
 		{game_over,WS,Game,man_won} ->
 			WS ! {game_over, man_won},
 			Human_bot_games1 = lists:delete(Game,Human_bot_games),
@@ -108,6 +106,28 @@ game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone) -
 				true -> io:format("Brain size:~p,000~n",[Size])
 			end,
 			game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR-1,Won,Draw,Lost,GamesDone+1);
+
+
+		%% DEMO game showing in webpage
+		{new_visitor,WS} -> % add_visitor_to subscription_list,
+			game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone);
+
+		new_demo_game -> % start_new_demo_game,
+			io:format("New DEMO game started~n"),
+			game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone);
+
+		{demo_game_state,State} -> % send_current_State,
+			game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone);
+
+		{demo_game_over,Color,Move} -> % send_LastMove_to_WS,
+			game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone);
+
+		{demo_game_over,draw} -> % send_DRAW_msg,
+			game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone);
+
+		{demo_game_move,Color,Move} -> % send_new_move,
+			game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone);
+
 
 		%% TODO: delete this
 		Err -> throw(Err)
@@ -142,6 +162,26 @@ run_bot_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,S
 
 
 
+start_new_demo_game(Schedule,GS) ->
+	State = state:init_state(),
+	timer:sleep(3000),
+	GS ! new_demo_game,
+	run_demo_game(Schedule,GS,medium,none,none,none,none,State).
+
+run_demo_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,State) ->
+	Move = bot:get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,_}=State),
+	%io:format("Bot move:~p, State:~p~n",[Move,State]),
+	%Move = rand:rand(State),
+	case change_state(State,Move) of
+		blacks_won -> GS ! {demo_game_over,blacks,Move}, start_new_demo_game(Schedule,GS);
+		whites_won -> GS ! {demo_game_over,whites,Move}, start_new_demo_game(Schedule,GS);
+		draw -> GS ! {demo_game_over,draw}, start_new_demo_game(Schedule,GS);
+		NextState -> 
+			GS ! {demo_game_move,color(Turn),Move},
+			run_demo_game(Schedule,GS,Level,OppPrevState,OppPrevMove,State,Move,NextState)
+	end.
+
+
 
 start_new_game(Schedule,GS,Level,blacks,WS) -> %% run Agent vs. Bot
 	% bot plays for blacks
@@ -153,7 +193,6 @@ start_new_game(Schedule,GS,Level,whites,WS) -> %% run Agent vs. Bot
 	OppPrevState = state:init_state(),
 	OppPrevMove = {8,8},
 	run_game(Schedule,GS,Level,none,none,OppPrevState,OppPrevMove,State,whites,WS).
-
 
 run_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,_Board}=State,Color,WS) ->
 	case color(Turn) =:= Color of
