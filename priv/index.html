@@ -196,7 +196,7 @@
             board.thinking();
         }
 
-        connection = new BoardConnection(board, 'ws:/localhost:8080', color, level);
+        connection = new BoardConnection(board, 'ws://' + window.location.host, color, level);
     }
 
     function close_game() {
