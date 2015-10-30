@@ -16,7 +16,6 @@
 
 
 
-check_five(illegal_move) -> illegal_move;
 check_five({Turn,Board}) -> 
 	case game:color(Turn) of
 		blacks -> check_five(board, w,Board);
@@ -26,20 +25,20 @@ check_five({Turn,Board}) ->
 check_five(board,Color,Board) ->
 	check_five(lines,Color,extract_lines(Board));
 
-check_five(lines,Color,[{_,_,Line}|Lines]) ->
-	case check_five_in_line(0,Color,Line) of
-		true -> true;
-		false-> check_five(lines,Color,Lines)
+check_five(lines,Color,[{{X1,Y1},{X2,Y2},Line}|Lines]) ->
+	case check_five_in_line(0,1,Color,Line) of
+		false-> check_five(lines,Color,Lines);
+		Index -> [index_to_XY({X1,Y1},{X2,Y2},Index-J) || J <- lists:seq(0,4)]
 	end;
 check_five(lines,_,[]) -> false.
 
-check_five_in_line(5,_,_) -> true;
-check_five_in_line(Count,Color,[Stone|Line]) ->
+check_five_in_line(5,Index,_,_) -> Index;
+check_five_in_line(Count,J,Color,[Stone|Line]) ->
 	case Stone == Color of
-		true -> check_five_in_line(Count+1,Color,Line);
-		false-> check_five_in_line(0,Color,Line)
+		true -> check_five_in_line(Count+1,J+1,Color,Line);
+		false-> check_five_in_line(0,J+1,Color,Line)
 	end;
-check_five_in_line(_,_,[]) -> false.
+check_five_in_line(_,_,_,[]) -> false.
 
 	
 
@@ -69,12 +68,9 @@ extract_diagonals(Board) ->
 pick_5th(Color,{{X1,Y1},{X2,Y2},Stones}) ->
 	case pick_5th(Color,Stones,1) of
 		not_found -> not_found;
-		Index ->
-			if X2>X1 -> Dx=1; X2<X1 -> Dx=-1; true -> Dx=0 end,
-			if Y2>Y1 -> Dy=1; Y2<Y1 -> Dy=-1; true -> Dy=0 end,
-
-			{X1+Dx*(Index-1),Y1+Dy*(Index-1)}
+		Index -> index_to_XY({X1,Y1},{X2,Y2},Index)
 	end.
+
 pick_5th(Me,[Me,Me,Me,Me,e|_],Index) -> Index + 4;
 pick_5th(Me,[Me,Me,Me,e,Me|_],Index) -> Index + 3;
 pick_5th(Me,[Me,Me,e,Me,Me|_],Index) -> Index + 2;
@@ -87,9 +83,7 @@ pick_5th(Me,[_|Stones],Index) ->
 
 
 pick_4th(Color,{{X1,Y1},{X2,Y2},Stones}) ->
-	if X2>X1 -> Dx=1; X2<X1 -> Dx=-1; true -> Dx=0 end,
-	if Y2>Y1 -> Dy=1; Y2<Y1 -> Dy=-1; true -> Dy=0 end,
-	[ {X1+Dx*(Index-1),Y1+Dy*(Index-1)} || Index <- pick_4th(Color,Stones,1) ].
+	[ index_to_XY({X1,Y1},{X2,Y2},Index) || Index <- pick_4th(Color,Stones,1) ].
 
 pick_4th(Me,[e,Me,Me,Me,e,e|Tile],Index) -> [Index + 4|pick_4th(Me,[e,e|Tile],Index+4)];
 pick_4th(Me,[e,Me,Me,e,Me,e|Tile],Index) -> [Index + 3|pick_4th(Me,[e,Me,e|Tile],Index+3)];
@@ -130,9 +124,7 @@ prevent_open3(_Color,[],Acc) -> Acc.
 
 
 close_3(Color,{{X1,Y1},{X2,Y2},Stones}) ->
-	if X2>X1 -> Dx=1; X2<X1 -> Dx=-1; true -> Dx=0 end,
-	if Y2>Y1 -> Dy=1; Y2<Y1 -> Dy=-1; true -> Dy=0 end,
-	[ {X1+Dx*(Index-1),Y1+Dy*(Index-1)} || Index <- close_3(Color,Stones,1) ].
+	[ index_to_XY({X1,Y1},{X2,Y2},Index) || Index <- close_3(Color,Stones,1) ].
 
 close_3(Me,[e,e,Me,Me,Me,e,e|Tile],I) -> [I+1, I+5|close_3(Me,[e,e|Tile],I+5)];
 close_3(Me,[e,Me,Me,Me,e,e|Tile],I) -> [I, I+4,I+5|close_3(Me,[e,e|Tile],I+4)];
@@ -146,10 +138,7 @@ close_3(Me,[_|Stones],Index) -> close_3(Me,Stones,Index+1).
 
 
 pick_cvd_4th(Color,{{X1,Y1},{X2,Y2},Stones}) ->
-	if X2>X1 -> Dx=1; X2<X1 -> Dx=-1; true -> Dx=0 end,
-	if Y2>Y1 -> Dy=1; Y2<Y1 -> Dy=-1; true -> Dy=0 end,
-
-	[ {X1+Dx*(Index-1),Y1+Dy*(Index-1)} || Index <- pick_cvd_4th(Color,Stones,1) ].
+	[ index_to_XY({X1,Y1},{X2,Y2},Index) || Index <- pick_cvd_4th(Color,Stones,1) ].
 	
 
 
@@ -165,5 +154,11 @@ pick_cvd_4th(Me,[_|Stones],Index) ->
 	pick_cvd_4th(Me,Stones,Index+1);
 pick_cvd_4th(_,Stones,_) when length(Stones)<5 -> [].
 
+
+
+index_to_XY({X1,Y1},{X2,Y2},Index) ->
+	if X2>X1 -> Dx=1; X2<X1 -> Dx=-1; true -> Dx=0 end,
+	if Y2>Y1 -> Dy=1; Y2<Y1 -> Dy=-1; true -> Dy=0 end,
+	{X1+Dx*(Index-1),Y1+Dy*(Index-1)}.
 
 

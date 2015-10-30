@@ -92,8 +92,8 @@ monte_carlo(PrevState,PrevMove,{Turn,_}=State,Moves,Simulation_Nbr) ->
 
 run_episode(PrevState,PrevMove,{Turn,_}=State,Depth,Move) ->
 	case game:change_state(State,Move) of
-		blacks_won -> learn(State,Move,-1),learn(PrevState,PrevMove,-1),-1;
-		whites_won -> learn(State,Move, 1),learn(PrevState,PrevMove, 1), 1;
+		{blacks_won,_Fiver} -> learn(State,Move,-1),learn(PrevState,PrevMove,-1),-1;
+		{whites_won,_Fiver} -> learn(State,Move, 1),learn(PrevState,PrevMove, 1), 1;
 		draw -> 0;
 		Next_state -> 
 			%gyri:check_gyrus(Turn+1),
