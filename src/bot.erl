@@ -280,7 +280,7 @@ max_value(whites) -> 1.
 
 
 
-episodes_nbr(easy)  -> 12;
+episodes_nbr(easy)  -> 24;
 episodes_nbr(medium)-> ?NBR_EPISODES;
 episodes_nbr(hard)  -> ?NBR_EPISODES*8.
 

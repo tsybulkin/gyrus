@@ -103,7 +103,7 @@ game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone) -
 			if
 				Size > 1000000 -> io:format("Brain size:~p,000,000~n",[Size div 1000000]);
 				Size > 1000 -> io:format("Brain size:~p,000~n",[ Size div 1000]);
-				true -> io:format("Brain size:~p,000~n",[Size])
+				true -> io:format("Brain size:~p~n",[Size])
 			end,
 			game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR-1,Won,Draw,Lost,GamesDone+1);
 
