@@ -80,16 +80,19 @@ game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone) -
 
 		{game_over,WS,Game,Fiver,man_won} ->
 			WS ! {game_over,Fiver,man_won},
+			WS ! {counters, Won,Draw,Lost+1,GamesDone+1},
 			Human_bot_games1 = lists:delete(Game,Human_bot_games),
 			game_manager(Schedule,Human_bot_games1,Bot_bot_gameNBR,Won,Draw,Lost+1,GamesDone+1);
 		
 		{game_over,WS,Game,draw} ->
 			WS ! {game_over, draw},
+			WS ! {counters,Won,Draw+1,Lost,GamesDone+1},
 			Human_bot_games1 = lists:delete(Game,Human_bot_games),
 			game_manager(Schedule,Human_bot_games1,Bot_bot_gameNBR,Won,Draw+1,Lost,GamesDone+1);
 
 		{game_over,WS,Game,Fiver,man_lost} ->
 			WS ! {game_over, Fiver, man_lost},
+			WS ! {counters, Won+1,Draw,Lost,GamesDone+1},
 			Human_bot_games1 = lists:delete(Game,Human_bot_games),
 			game_manager(Schedule,Human_bot_games1,Bot_bot_gameNBR,Won+1,Draw,Lost,GamesDone+1);
 			
