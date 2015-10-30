@@ -14,7 +14,7 @@
 		]).
 
 -define(HUMAN_BOT_GAMES_LIMIT, 10).
--define(BOT_BOT_GAMES_LIMIT, 3).
+-define(BOT_BOT_GAMES_LIMIT, 6).
 
 start_link() ->
 	Schedule = [],
@@ -147,7 +147,8 @@ game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone) -
 
 start_new_bot_game(Schedule,GS) ->
 	State = state:init_state(),
-	run_bot_game(Schedule,GS,hard,none,none,none,none,State).
+	Level = rand:pick_randomly([hard,medium,hard]),
+	run_bot_game(Schedule,GS,Level,none,none,none,none,State).
 
 run_bot_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,State) ->
 	Move = bot:get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,State),
@@ -166,7 +167,7 @@ start_new_demo_game(Schedule,GS) ->
 	State = state:init_state(),
 	timer:sleep(3000),
 	GS ! new_demo_game,
-	run_demo_game(Schedule,GS,medium,none,none,none,none,State).
+	run_demo_game(Schedule,GS,hard,none,none,none,none,State).
 
 run_demo_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,State) ->
 	Move = bot:get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,_}=State),
@@ -246,7 +247,7 @@ change_state({Turn,Board},{I,J}) ->
 				whites -> blacks_won;
 				blacks -> whites_won
 			end;
-		false when Turn =:= 99 -> draw;
+		false when Turn =:= 59 -> draw;
 		false -> Next_state
 	end.	
 

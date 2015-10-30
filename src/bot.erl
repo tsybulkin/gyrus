@@ -59,13 +59,14 @@ get_best_simulation(PrevState,PrevMove,Moves,{Turn,_}=State,N) ->
 	Refined = monte_carlo(PrevState,PrevMove,State,Best_moves, N_per_move),	
 	io:format("Turn:~p  Refined moves: ~p~n",[Turn,Refined]),
 
-	[{_,Move}|_] = Refined,
+	[{Rmax,_Move}|_] = Refined,
+	rand:pick_randomly([ Move ||{R,Move} <- Refined, R=:=Rmax]).
 	%if abs(Score) =:= N_per_move -> 
 	%	learn(State,Move,Score div N_per_move),
 	%	learn(PrevState,PrevMove,Score div N_per_move); 
 	%	true -> ok 
 	%end,
-	Move.
+
 
 
 
@@ -75,13 +76,16 @@ monte_carlo(PrevState,PrevMove,{Turn,_}=State,Moves,Simulation_Nbr) ->
 	lists:sort( fun({A,_},{B,_})-> A>B end,lists:foldl(
 		fun(Move,Acc) ->
 			CumScore = 
-			lists:foldl(fun(_,ScoreAcc)-> run_episode(PrevState,PrevMove,State,Depth,Move)+ScoreAcc
-						end,0,lists:seq(1,Simulation_Nbr)),
-			case game:color(Turn) of
-				blacks -> [{-CumScore,Move}|Acc];
-				whites -> [{CumScore,Move}|Acc]
-			end
-			
+			lists:foldl(fun(_,ScoreAcc)-> 
+					case {game:color(Turn),run_episode(PrevState,PrevMove,State,Depth,Move)} of
+						{blacks,-1} -> ScoreAcc+2;
+						{blacks, 1} -> ScoreAcc-1;
+						{whites, 1} -> ScoreAcc+2;
+						{whites,-1} -> ScoreAcc-1;
+						_ -> ScoreAcc
+					end	
+				end,0,lists:seq(1,Simulation_Nbr)),
+			[{CumScore,Move}|Acc]
 		end, [], Moves)).
 
 
