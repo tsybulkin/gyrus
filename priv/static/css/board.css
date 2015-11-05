@@ -33,6 +33,11 @@
 .next {
   border: 2px dashed red;
 }
+.win {
+  /*border-width: 3px;*/
+  /*background-color: rgb(48, 152, 80);*/
+  border-color: red;
+}
 
 .message {
     position:absolute;

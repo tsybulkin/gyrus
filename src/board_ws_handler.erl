@@ -1,4 +1,4 @@
--module(ws_handler).
+-module(board_ws_handler).
 -export([init/2]).
 -export([terminate/3]).
 -export([websocket_info/3]).
@@ -10,10 +10,10 @@ handle_client_msg([<<"player_move">>,X,Y], Req, S=#state{game_pid = GamePid}) ->
   Reply = case game:game_manager_call({player_move, self(), GamePid, {X,Y}}) of
     {bot_move,{X1,Y1}} ->
       [bot_move, X1, Y1];
-    {game_over,{X1,Y1},man_lost} ->
-      [game_over, man_lost, X1,Y1];
-    {game_over,man_won} ->
-      [game_over, man_won]
+    {game_over,[{X1,Y1},{X2,Y2},{X3,Y3},{X4,Y4},{X5,Y5}],man_lost} ->
+      [game_over, man_lost, X1,Y1, X2,Y2, X3,Y3, X4,Y4, X5,Y5];
+    {game_over,[{X1,Y1},{X2,Y2},{X3,Y3},{X4,Y4},{X5,Y5}],man_won} ->
+      [game_over, man_won, X1,Y1, X2,Y2, X3,Y3, X4,Y4, X5,Y5]
   end,
   {reply, {text, jsx:encode(Reply)}, Req, S}.
 
@@ -32,8 +32,8 @@ terminate(_Reason, _Req, #state{game_pid = Game}) ->
 
 websocket_info({bot_move, {X,Y}}, Req, State) ->
   {reply, {text, jsx:encode([bot_move, X, Y])}, Req, State};
-websocket_info({game_over, {X,Y}, man_lost}, Req, State) ->
-  {reply, {text, jsx:encode([game_over_man_lost, X, Y])}, Req, State};
+websocket_info({counters,Won,Draw,Lost,GamesDone}, Req, State) ->
+  {reply, {text, jsx:encode([counters,Won,Draw,Lost,GamesDone])}, Req, State};
 websocket_info(Msg, Req, State) ->
   throw({ws, Msg}).
 

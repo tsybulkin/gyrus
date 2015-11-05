@@ -32,7 +32,7 @@ check_five(lines,Color,[{{X1,Y1},{X2,Y2},Line}|Lines]) ->
 	end;
 check_five(lines,_,[]) -> false.
 
-check_five_in_line(5,Index,_,_) -> Index;
+check_five_in_line(5,Index,_,_) -> Index-1;
 check_five_in_line(Count,J,Color,[Stone|Line]) ->
 	case Stone == Color of
 		true -> check_five_in_line(Count+1,J+1,Color,Line);

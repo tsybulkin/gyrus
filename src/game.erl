@@ -126,6 +126,9 @@ game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone) -
 		{demo_game_move,Color,Move} -> % send_new_move,
 			game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone);
 
+                {get_counters, Pid} ->
+			Pid ! {counters, Won,Draw,Lost,GamesDone},
+                        game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone);
 
 		%% TODO: delete this
 		Err -> throw(Err)
@@ -162,6 +165,7 @@ run_bot_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,S
 
 
 start_new_demo_game(Schedule,GS) ->
+        true = register(demo_game, self()),
 	State = state:init_state(),
 	timer:sleep(3000),
 	GS ! new_demo_game,
@@ -200,7 +204,7 @@ run_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn
 			%io:format("Bot move:~p, State:~p~n",[Move,State]),
 			%Move = rand:rand(State),
 			case change_state(State,Move) of
-				{_,Fiver} -> GS ! {game_over, WS, self(), Fiver, man_lost}, gyri:save_gyri();
+				{Won,Fiver} when blacks_won==Won; whites_won==Won -> GS ! {game_over, WS, self(), Fiver, man_lost}, gyri:save_gyri();
 				draw -> GS ! {game_over, WS, self(), draw}, gyri:save_gyri();
 				NextState -> GS ! {bot_move, WS, self(), Move},
 					run_game(Schedule,GS,Level,OppPrevState,OppPrevMove,State,Move,NextState,Color,WS)
@@ -211,7 +215,7 @@ run_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn
 				{move, Move} ->
 					%io:format("Human move:~p, State:~p~n",[Move,State]),
 					case change_state(State,Move) of
-						{_,Fiver} -> GS ! {game_over, WS, self(), Fiver,man_won}, gyri:save_gyri();
+						{Won,Fiver} when blacks_won==Won; whites_won==Won -> GS ! {game_over, WS, self(), Fiver,man_won}, gyri:save_gyri();
 						draw -> GS ! {game_over, WS, self(), draw}, gyri:save_gyri();
 						NextState -> run_game(Schedule,GS,Level,OppPrevState,OppPrevMove,State,Move,NextState,Color,WS)
 					end
