@@ -90,7 +90,7 @@ t() ->
 get_good_moves(Me,Lines) ->
 	Moves = lists:foldl(fun(Line,Acc) -> rate_line(Me,Line)++Acc end,[],Lines), 
 	Sorted = lists:sort(fun({_,A},{_,B})-> A>B end, group(lists:sort(Moves))),
-	[{_,MaxRate}|_] = Sorted, Thr = 0.3*MaxRate,
+	[{_,MaxRate}|_] = Sorted, Thr = 0.25*MaxRate,
 	pick_best(lists:filter(fun({_,R})-> R>=Thr end,Sorted),Thr+1).
 
 
@@ -138,12 +138,12 @@ rate_row(_,_,[],_,Acc) -> Acc.
 
 
 
-pick_best(Ls,_Thr) when length(Ls)=<11 -> [XY ||{XY,_} <- Ls];
+pick_best(Ls,_Thr) when length(Ls)=<15 -> [XY ||{XY,_} <- Ls];
 pick_best(Ls,Thr) ->
 	Ls1 = lists:filter(fun({_,X})-> X>Thr end, Ls),
 	if
-		length(Ls1)>11 -> pick_best(Ls1,Thr+1);
-		length(Ls1)<7 -> [XY ||{XY,_} <- Ls];
+		length(Ls1)>15 -> pick_best(Ls1,Thr+1);
+		length(Ls1)<9 -> [XY ||{XY,_} <- Ls];
 		true -> [XY ||{XY,_} <- Ls1]
 	end.
 
