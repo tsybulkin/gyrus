@@ -191,3 +191,65 @@ function BoardConnection(board, baseUrl, color, level) {
     }
 }
 
+function DemoBoardConnection(board, baseUrl) {
+    var self = this;
+
+    function handle_message(msg) {
+        console.log(msg);
+        var action = msg[0];
+        if ('demo_game_move' == action) {
+            var color = msg[1];
+            var x = msg[2];
+            var y = msg[3];
+            board.addChecker(x, y, color);
+        }
+        else if ('game_over' == action) {
+            if ('man_lost' == msg[1]) {
+                var x_indices = _.range(2, 12, 2);
+                x_indices.forEach(function (x_index) {
+                    var x = msg[x_index];
+                    var y = msg[x_index + 1];
+                    board.winChecker(x, y, bots_color);
+                });
+                board.message("You lose!");
+            }
+            else if ('man_won' == msg[1]) {
+                var x_indices = _.range(2, 12, 2);
+                x_indices.forEach(function (x_index) {
+                    var x = msg[x_index];
+                    var y = msg[x_index + 1];
+                    board.winChecker(x, y, color);
+                });
+                board.message("You won!");
+            }
+        }
+        else if ('counters' == action) {
+            var won = msg[1];
+            var draw = msg[2];
+            var lose = msg[3];
+            var done = msg[4];
+
+            document.getElementById('won').innerHTML = won;
+            document.getElementById('draw').innerHTML = draw;
+            document.getElementById('lose').innerHTML = lose;
+            document.getElementById('done').innerHTML = done;
+        }
+
+    }
+
+    var ws = new WebSocket(baseUrl + 'demo_game');
+    ws.onmessage = function (e) {
+        var msg = JSON.parse(e.data);
+        handle_message(msg);
+    };
+    ws.onerror = function (err) {
+        alert('ws error: ' + err);
+        console.log('ws error: ' + err);
+    };
+    this.ws = ws;
+
+    this.close = function () {
+        ws.close();
+    }
+}
+

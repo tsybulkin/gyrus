@@ -190,7 +190,7 @@
             board.thinking();
         }
 
-        connection = new BoardConnection(board, 'ws://' + window.location.host, color, level);
+        connection = new BoardConnection(board, 'ws://' + window.location.host + window.location.pathname, color, level);
     }
 
     function close_game() {
@@ -208,34 +208,38 @@
     }
 
   var b = new Board(document.getElementById('demo_game'), 20);
-  new DemoBoardConnection(b, 'ws://' + window.location.host);
+  new DemoBoardConnection(b, 'ws://' + window.location.host + window.location.pathname);
 
-  var xmlhttp = new XMLHttpRequest();
-  xmlhttp.open("GET", window.location + "info", true);
-  xmlhttp.onreadystatechange = function() {
-      if (xmlhttp.readyState == XMLHttpRequest.DONE ) {
-         if(xmlhttp.status == 200){
-            var msg = JSON.parse(xmlhttp.responseText);
-            var won = msg[1];
-            var draw = msg[2];
-            var lose = msg[3];
-            var done = msg[4];
+  function updateCounters() {
+    var xmlhttp = new XMLHttpRequest();
+    xmlhttp.open("GET", window.location + "info", true);
+    xmlhttp.onreadystatechange = function() {
+        if (xmlhttp.readyState == XMLHttpRequest.DONE ) {
+           if(xmlhttp.status == 200){
+              var msg = JSON.parse(xmlhttp.responseText);
+              var won = msg[1];
+              var draw = msg[2];
+              var lose = msg[3];
+              var done = msg[4];
 
-            document.getElementById('won').innerHTML = won;
-            document.getElementById('draw').innerHTML = draw;
-            document.getElementById('lose').innerHTML = lose;
-            document.getElementById('done').innerHTML = done;
-         }
-         else if(xmlhttp.status == 400) {
-            alert('There was an error 400')
-         }
-         else {
-             alert('something else other than 200 was returned')
-         }
-      }
+              document.getElementById('won').innerHTML = won;
+              document.getElementById('draw').innerHTML = draw;
+              document.getElementById('lose').innerHTML = lose;
+              document.getElementById('done').innerHTML = done;
+           }
+           else if(xmlhttp.status == 400) {
+              console.log('There was an error 400')
+           }
+           else {
+               console.log('something else other than 200 was returned')
+           }
+        }
+    }
+
+    xmlhttp.send();
   }
-
-  xmlhttp.send();
+  updateCounters();
+  setInterval(updateCounters, 5000);
 
 </script>
 
