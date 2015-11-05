@@ -14,12 +14,12 @@
 		]).
 
 -define(HUMAN_BOT_GAMES_LIMIT, 10).
--define(BOT_BOT_GAMES_LIMIT, 0).
+-define(BOT_BOT_GAMES_LIMIT, 6).
 
 start_link() ->
 	Schedule = [],
-	Pid = spawn_link(?MODULE, game_manager, [Schedule,[],0,0,0,0,0]),
-	% spawn(?MODULE,start_new_demo_game,[Schedule,Pid]),
+	Pid = spawn_link(?MODULE, game_manager, [Schedule,[],1,0,0,0,0]),
+	spawn(?MODULE,start_new_demo_game,[Schedule,Pid]),
 	gyri:init_gyri(),
 	true = register(game_manager, Pid),
 	{ok, Pid}.
@@ -126,6 +126,9 @@ game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone) -
 		{demo_game_move,Color,Move} -> % send_new_move,
 			game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone);
 
+                {get_counters, Pid} ->
+			Pid ! {counters, Won,Draw,Lost,GamesDone},
+                        game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone);
 
 		%% TODO: delete this
 		Err -> throw(Err)
@@ -162,6 +165,7 @@ run_bot_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,S
 
 
 start_new_demo_game(Schedule,GS) ->
+        true = register(demo_game, self()),
 	State = state:init_state(),
 	timer:sleep(3000),
 	GS ! new_demo_game,

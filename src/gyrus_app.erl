@@ -23,8 +23,10 @@ start(_StartType, _StartArgs) ->
       {'_', [
         {"/", cowboy_static, {file, "priv/index.html"}},
         {"/static/[...]", cowboy_static, {dir, "priv/static"}},
-        {"/new_game/:color/:level", ws_handler, []},
-        {"/board/:board", ws_handler, []}
+        {"/new_game/:color/:level", board_ws_handler, []},
+        {"/demo_game", demo_ws_handler, []},
+        {"/board/:board", ws_handler, []},
+        {"/info", info_handler, []}
       ]}
     ]),
     {ok, _} = cowboy:start_http(http, 100, [{port, 8080}],

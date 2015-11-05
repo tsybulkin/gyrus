@@ -207,7 +207,35 @@
         game_view.className = tmpClassName;
     }
 
-   var b = new Board(document.getElementById('demo_game'), 20);
+  var b = new Board(document.getElementById('demo_game'), 20);
+  new DemoBoardConnection(b, 'ws://' + window.location.host);
+
+  var xmlhttp = new XMLHttpRequest();
+  xmlhttp.open("GET", window.location + "info", true);
+  xmlhttp.onreadystatechange = function() {
+      if (xmlhttp.readyState == XMLHttpRequest.DONE ) {
+         if(xmlhttp.status == 200){
+            var msg = JSON.parse(xmlhttp.responseText);
+            var won = msg[1];
+            var draw = msg[2];
+            var lose = msg[3];
+            var done = msg[4];
+
+            document.getElementById('won').innerHTML = won;
+            document.getElementById('draw').innerHTML = draw;
+            document.getElementById('lose').innerHTML = lose;
+            document.getElementById('done').innerHTML = done;
+         }
+         else if(xmlhttp.status == 400) {
+            alert('There was an error 400')
+         }
+         else {
+             alert('something else other than 200 was returned')
+         }
+      }
+  }
+
+  xmlhttp.send();
 
 </script>
 

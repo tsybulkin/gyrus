@@ -1,4 +1,4 @@
--module(ws_handler).
+-module(board_ws_handler).
 -export([init/2]).
 -export([terminate/3]).
 -export([websocket_info/3]).
