@@ -14,12 +14,12 @@
 		]).
 
 -define(HUMAN_BOT_GAMES_LIMIT, 10).
--define(BOT_BOT_GAMES_LIMIT, 6).
+-define(BOT_BOT_GAMES_LIMIT, 0).
 
 start_link() ->
 	Schedule = [],
-	Pid = spawn_link(?MODULE, game_manager, [Schedule,[],1,0,0,0,0]),
-	spawn(?MODULE,start_new_demo_game,[Schedule,Pid]),
+	Pid = spawn_link(?MODULE, game_manager, [Schedule,[],0,0,0,0,0]),
+	% spawn(?MODULE,start_new_demo_game,[Schedule,Pid]),
 	gyri:init_gyri(),
 	true = register(game_manager, Pid),
 	{ok, Pid}.
@@ -200,7 +200,7 @@ run_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn
 			%io:format("Bot move:~p, State:~p~n",[Move,State]),
 			%Move = rand:rand(State),
 			case change_state(State,Move) of
-				{_,Fiver} -> GS ! {game_over, WS, self(), Fiver, man_lost}, gyri:save_gyri();
+				{Won,Fiver} when blacks_won==Won; whites_won==Won -> GS ! {game_over, WS, self(), Fiver, man_lost}, gyri:save_gyri();
 				draw -> GS ! {game_over, WS, self(), draw}, gyri:save_gyri();
 				NextState -> GS ! {bot_move, WS, self(), Move},
 					run_game(Schedule,GS,Level,OppPrevState,OppPrevMove,State,Move,NextState,Color,WS)
@@ -211,7 +211,7 @@ run_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn
 				{move, Move} ->
 					%io:format("Human move:~p, State:~p~n",[Move,State]),
 					case change_state(State,Move) of
-						{_,Fiver} -> GS ! {game_over, WS, self(), Fiver,man_won}, gyri:save_gyri();
+						{Won,Fiver} when blacks_won==Won; whites_won==Won -> GS ! {game_over, WS, self(), Fiver,man_won}, gyri:save_gyri();
 						draw -> GS ! {game_over, WS, self(), draw}, gyri:save_gyri();
 						NextState -> run_game(Schedule,GS,Level,OppPrevState,OppPrevMove,State,Move,NextState,Color,WS)
 					end
