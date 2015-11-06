@@ -5,12 +5,49 @@ function Board(parent, cellSize, callback) {
     active = typeof active !== 'undefined' ? active : false;
     // Mouse coordinates
     var x = 0, y = 0;
-    var matrix = _.map(_.range(15), function () {
-        return _.map(_.range(15), function () {
-            return false
-        })
-    });
+    var matrix = [
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false]
+    ];
 
+    this.clear = function() {
+matrix = [
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
+      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false]
+    ];
+    var circles = document.getElementsByClassName('circle');
+      for (var i = 0; i < circles.length; i++) {
+          var child = circles[i];
+          self.div.removeChild(child);
+      }
+      return circles.length;
+    };
 
     // create background dom element
     var background = document.createElement('div');
@@ -63,10 +100,10 @@ function Board(parent, cellSize, callback) {
     });
 
     this.addChecker = function (x, y, color, classes) {
-        classes = typeof classes !== 'undefined' ? classes : '';
+        classes = typeof classes !== 'undefined' ? classes : ' ';
         var ch = document.createElement('div');
         ch.id = x + '_' + y;
-        ch.className = 'circle ' + classes + ' ' + color;
+        ch.className = 'circle' + classes + color;
         ch.style.width = cellSize - 4 + 'px';
         ch.style.height = cellSize - 4 + 'px';
         ch.style.position = 'absolute';
@@ -74,14 +111,14 @@ function Board(parent, cellSize, callback) {
         var ch_size = cellSize;
         ch.style.left = cell_size * (x - 1) - ch_size / 2 + x + 'px';
         ch.style.bottom = cell_size * (y - 1) - ch_size / 2 + y + 'px';
-        this.div.appendChild(ch);
+        board.appendChild(ch);
         matrix[x - 1][y - 1] = true;
     };
 
     this.winChecker = function (x, y, color) {
         if (matrix[x - 1][y - 1]) {
             var ch = document.getElementById(x + '_' + y);
-            ch.className += ' win';
+            ch.className += ' win ';
         }
         else {
             self.addChecker(x, y, color, 'win');
@@ -203,36 +240,26 @@ function DemoBoardConnection(board, baseUrl) {
             var y = msg[3];
             board.addChecker(x, y, color);
         }
-        else if ('game_over' == action) {
-            if ('man_lost' == msg[1]) {
-                var x_indices = _.range(2, 12, 2);
-                x_indices.forEach(function (x_index) {
-                    var x = msg[x_index];
-                    var y = msg[x_index + 1];
-                    board.winChecker(x, y, bots_color);
-                });
-                board.message("You lose!");
-            }
-            else if ('man_won' == msg[1]) {
-                var x_indices = _.range(2, 12, 2);
-                x_indices.forEach(function (x_index) {
-                    var x = msg[x_index];
-                    var y = msg[x_index + 1];
-                    board.winChecker(x, y, color);
-                });
-                board.message("You won!");
+        else if ('demo_game_board' == action) {
+          var m = msg[1];
+          for (var x = 0; x < 15; x++)
+            for (var y = 0; y < 15; y++) {
+              var c = m[y][x];
+              if ('w' == c)
+                board.addChecker(x+1, y+1, 'whites');
+              else if ('b' == c)
+                board.addChecker(x+1, y+1, 'blacks');
             }
         }
-        else if ('counters' == action) {
-            var won = msg[1];
-            var draw = msg[2];
-            var lose = msg[3];
-            var done = msg[4];
-
-            document.getElementById('won').innerHTML = won;
-            document.getElementById('draw').innerHTML = draw;
-            document.getElementById('lose').innerHTML = lose;
-            document.getElementById('done').innerHTML = done;
+        else if ('demo_game_over' == action) {
+            var color = msg[1];
+            var x_indices = _.range(2, 12, 2);
+            x_indices.forEach(function (x_index) {
+                var x = msg[x_index];
+                var y = msg[x_index + 1];
+                board.winChecker(x, y, color);
+            });
+            board.clear();
         }
 
     }
