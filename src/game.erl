@@ -19,7 +19,8 @@
 start_link() ->
 	Schedule = [],
 	Pid = spawn_link(?MODULE, game_manager, [Schedule,[],1,0,0,0,0]),
-	spawn(?MODULE,start_new_demo_game,[Schedule,Pid]),
+	DemoPid = spawn(?MODULE,start_new_demo_game,[Schedule,Pid]),
+        true = register(demo_game, DemoPid),
 	gyri:init_gyri(),
 	true = register(game_manager, Pid),
 	{ok, Pid}.
@@ -165,23 +166,39 @@ run_bot_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,S
 
 
 start_new_demo_game(Schedule,GS) ->
-        true = register(demo_game, self()),
 	State = state:init_state(),
 	timer:sleep(3000),
-	GS ! new_demo_game,
-	run_demo_game(Schedule,GS,hard,none,none,none,none,State).
+	%GS ! new_demo_game,
+	run_demo_game(Schedule,GS,hard,none,none,none,none,State,sets:new()).
 
-run_demo_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,State) ->
+distribute(Message, Pids) ->
+  true = sets:is_set(Pids),
+  lists:foreach(fun(Pid) ->
+    Pid ! Message
+  end, sets:to_list(Pids)).
+
+run_demo_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,State,Pids) ->
 	Move = bot:get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,_}=State),
 	%io:format("Bot move:~p, State:~p~n",[Move,State]),
 	%Move = rand:rand(State),
-	case change_state(State,Move) of
-		{blacks_won,Fiver} -> GS ! {demo_game_over,blacks,Fiver}, start_new_demo_game(Schedule,GS);
-		{whites_won,Fiver} -> GS ! {demo_game_over,whites,Fiver}, start_new_demo_game(Schedule,GS);
-		draw -> GS ! {demo_game_over,draw}, start_new_demo_game(Schedule,GS);
+
+        Pids1 = receive
+          {subscribe, Pid} ->
+            sets:add_element(Pid, Pids);
+          {unsubscribe, Pid} ->
+            sets:del_element(Pid, Pids)
+        after 0 ->
+          Pids
+        end,
+
+	Result = case change_state(State,Move) of
+		{blacks_won,Fiver} -> distribute({demo_game_over,blacks,Fiver}, Pids1), start_new_demo_game(Schedule,GS);
+		{whites_won,Fiver} -> distribute({demo_game_over,whites,Fiver}, Pids1), start_new_demo_game(Schedule,GS);
+		draw -> 
+                  distribute({demo_game_over,draw}, Pids1), start_new_demo_game(Schedule,GS);
 		NextState -> 
-			GS ! {demo_game_move,color(Turn),Move},
-			run_demo_game(Schedule,GS,Level,OppPrevState,OppPrevMove,State,Move,NextState)
+			distribute({demo_game_move,color(Turn),Move}, Pids1),
+			run_demo_game(Schedule,GS,Level,OppPrevState,OppPrevMove,State,Move,NextState, Pids1)
 	end.
 
 

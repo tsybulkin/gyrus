@@ -8,16 +8,18 @@
 %% 
 
 init(Req, _Opts) ->
-  %{start_new_game,_,Color,GamePid} = game:game_manager_call({new_game_request, self(), Color, Level}),
+  demo_game ! {subscribe, self()},
   {cowboy_websocket, Req, #state{}}.
 
 terminate(_Reason, _Req, #state{}) ->
-  ok. %game:game_manager_call({connection_closed, Game}).
+  demo_game ! {unsubscribe, self()}.
 
-websocket_info({bot_move, {X,Y}}, Req, State) ->
-  {reply, {text, jsx:encode([bot_move, X, Y])}, Req, State};
-websocket_info({counters,Won,Draw,Lost,GamesDone}, Req, State) ->
-  {reply, {text, jsx:encode([counters,Won,Draw,Lost,GamesDone])}, Req, State};
+websocket_info({demo_game_move, Color, {X,Y}}, Req, State) ->
+  {reply, {text, jsx:encode([demo_game_move, Color, X, Y])}, Req, State};
+websocket_info({demo_game_over,Color,[{X1,Y1},{X2,Y2},{X3,Y3},{X4,Y4},{X5,Y5}]}, Req, State) ->
+  {reply, {text, jsx:encode([demo_game_over, Color, X1,Y1, X2,Y2, X3,Y3, X4,Y4, X5,Y5])}, Req, State};
+websocket_info({demo_game_over,draw}, Req, State) ->
+  {reply, {text, jsx:encode([demo_game_over,draw])}, Req, State};
 websocket_info(Msg, Req, State) ->
   throw({ws, Msg}).
 
