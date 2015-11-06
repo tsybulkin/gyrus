@@ -20,6 +20,8 @@ websocket_info({demo_game_over,Color,[{X1,Y1},{X2,Y2},{X3,Y3},{X4,Y4},{X5,Y5}]},
   {reply, {text, jsx:encode([demo_game_over, Color, X1,Y1, X2,Y2, X3,Y3, X4,Y4, X5,Y5])}, Req, State};
 websocket_info({demo_game_over,draw}, Req, State) ->
   {reply, {text, jsx:encode([demo_game_over,draw])}, Req, State};
+websocket_info({demo_game_board, Board}, Req, State) ->
+  {reply, {text, jsx:encode([demo_game_board, Board])}, Req, State};
 websocket_info(Msg, Req, State) ->
   throw({ws, Msg}).
 

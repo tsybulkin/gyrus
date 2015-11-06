@@ -207,8 +207,8 @@
         game_view.className = tmpClassName;
     }
 
-  var b = new Board(document.getElementById('demo_game'), 20);
-  new DemoBoardConnection(b, 'ws://' + window.location.host + window.location.pathname);
+  demo_board = new Board(document.getElementById('demo_game'), 30);
+  new DemoBoardConnection(demo_board, 'ws://' + window.location.host + window.location.pathname);
 
   function updateCounters() {
     var xmlhttp = new XMLHttpRequest();
