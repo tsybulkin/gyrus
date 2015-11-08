@@ -149,8 +149,8 @@ game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone) -
 
 start_new_bot_game(Schedule,GS) ->
 	State = state:init_state(),
-	Level = rand:pick_randomly([hard,medium,hard]),
-	run_bot_game(Schedule,GS,Level,none,none,none,none,State).
+	%Level = rand:pick_randomly([hard,medium,hard]),
+	run_bot_game(Schedule,GS,hard,none,none,none,none,State).
 
 run_bot_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,State) ->
 	Move = bot:get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,State),

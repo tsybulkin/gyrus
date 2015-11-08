@@ -14,7 +14,6 @@
 get_move(_Level,_,_,_,_,{1,_Board}) -> {8,8};
 get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,_}=State) ->
 	%state:print_board(Board),
-	%gyri:check_gyrus(Turn),
 	%io:format("~n * * Turn:~p ~n",[Turn]),
 	case get_best_worst_state_moves(State) of
 		no_policy -> %io:format("no_policy ~n"),
@@ -140,17 +139,17 @@ learn({Turn,Board},{X,Y},Next_state_value) ->
 save_best_move(X,Y,Position,Key,Gyrus) ->
 	%io:format("Saving best move: ~p at position ~p~n",[{X,Y},Position]),
 	case ets:lookup(Gyrus,Key) of
-		[] -> ets:insert(Gyrus,{Key,Position,[{X,Y}],[]});
+		[] -> ets:insert(Gyrus,{Key,term_to_binary(Position),[{X,Y}],[]});
 		Values -> 
-			case get_variant_values(Position,1,Values) of
-				not_found -> ets:insert(Gyrus,{Key,Position,[{X,Y}],[]});
-				{Var,SymPosition,Best_moves,Worst_moves} ->
+			case get_variant_values(term_to_binary(Position),1,Values) of
+				not_found -> ets:insert(Gyrus,{Key,term_to_binary(Position),[{X,Y}],[]});
+				{Var,SymPositionBin,Best_moves,Worst_moves} ->
 					%io:format("Found: ~p~n",[{Var,SymPosition,Best_moves,Worst_moves}]),
 					{X1,Y1} = state:transform(X,Y,Var,Position),
 					case lists:member({X1,Y1},Best_moves) of
 						true -> ok;
 						false->
-							Values1 = lists:keyreplace(SymPosition,2,Values,{Key,SymPosition,[{X1,Y1}|Best_moves],Worst_moves}),
+							Values1 = lists:keyreplace(SymPositionBin,2,Values,{Key,SymPositionBin,[{X1,Y1}|Best_moves],Worst_moves}),
 							%io:format("Old values:~p~nNew Values: ~p~n",[Values,Values1]),
 							ets:delete(Gyrus,Key),
 							ets:insert(Gyrus,Values1)
@@ -164,17 +163,17 @@ save_best_move(X,Y,Position,Key,Gyrus) ->
 save_worst_move(X,Y,Position,Key,Gyrus) ->
 	%io:format("Saving worst move: ~p at position ~p~n",[{X,Y},Position]),
 	case ets:lookup(Gyrus,Key) of
-		[] -> ets:insert(Gyrus,{Key,Position,[],[{X,Y}]});
+		[] -> ets:insert(Gyrus,{Key,term_to_binary(Position),[],[{X,Y}]});
 		Values -> 
-			case get_variant_values(Position,1,Values) of
-				not_found -> ets:insert(Gyrus,{Key,Position,[],[{X,Y}]});
-				{Var,SymPosition,Best_moves,Worst_moves} ->
+			case get_variant_values(term_to_binary(Position),1,Values) of
+				not_found -> ets:insert(Gyrus,{Key,term_to_binary(Position),[],[{X,Y}]});
+				{Var,SymPositionBin,Best_moves,Worst_moves} ->
 					%io:format("Found: ~p~n",[{Var,SymPosition,Best_moves,Worst_moves}]),
 					{X1,Y1} = state:transform(X,Y,Var,Position),
 					case lists:member({X1,Y1},Worst_moves) of
 						true -> ok;
 						false->
-							Values1 = lists:keyreplace(SymPosition,2,Values,{Key,SymPosition,Best_moves,[{X1,Y1}|Worst_moves]}),
+							Values1 = lists:keyreplace(SymPositionBin,2,Values,{Key,SymPositionBin,Best_moves,[{X1,Y1}|Worst_moves]}),
 							ets:delete(Gyrus,Key),
 							%io:format("Old values:~p~nNew Values: ~p~n",[Values,Values1]),
 							ets:insert(Gyrus,Values1)
@@ -208,18 +207,13 @@ get_best_worst_state_moves({Turn,Board}) ->
 	Key = state:get_key(Position),
 	Gyrus = gyrus_name(Turn),
 	case ets:lookup(Gyrus,Key) of
-		[] ->
-			%io:format("no Key found for ~p~n",[{X0,Y0,Position}]), 
-			no_policy;
+		[] -> no_policy;
+
 		Values -> 
-			case match_position(Position,1,Values) of
+			Variant1 = 1,
+			case match_position(Position,Variant1,Values) of
 				no_match -> no_policy;
 				{Type,Moves,Variant} -> 
-					%if Variant=/=1 -> 
-					%	io:format("Match found: ~p~n",[{Type,Moves,Variant}]),
-					%	state:print_board(Board);
-					%	true->ok 
-					%end,
 					case state:filter_legal(Moves,X0,Y0,Variant,Position,{Turn,Board}) of 
 						[] -> no_policy;
 						Filtered -> {Type,Filtered}
@@ -230,7 +224,7 @@ get_best_worst_state_moves({Turn,Board}) ->
 
 
 match_position(Position,Variant,Values) ->
-	case lists:keyfind(Position,2,Values) of
+	case lists:keyfind(term_to_binary(Position),2,Values) of
 		false -> 
 			case Variant of
 				-1 -> no_match;
@@ -239,30 +233,21 @@ match_position(Position,Variant,Values) ->
 					match_position(Position1,Next_var,Values)
 			end;
 
-		{_,Position,[],Worst} -> 
-			%if Variant=/=1 -> 
-			%	io:format("Position: ~p~n",[Position]); 
-			%	true->ok 
-			%end, 
-			{worst_moves,Worst,Variant};
-		{_,Position,Best,_} -> 
-			%if Variant=/=1 -> 
-			%			io:format("Position: ~p~n",[Position]); 
-			%			true->ok 
-			%end,
-			{best_moves,Best,Variant}
+		{_,_PositionBin,[],Worst} -> {worst_moves,Worst,Variant};
+
+		{_,_PositionBin,Best,_} -> {best_moves,Best,Variant}
 	end.
 
 
 
-get_variant_values(_Position,-1,_Values) -> not_found;
-get_variant_values(Position,Variant,Values) ->
-	case lists:keyfind(Position,2,Values) of
+get_variant_values(_PositionBin,-1,_Values) -> not_found;
+get_variant_values(PositionBin,Variant,Values) ->
+	case lists:keyfind(PositionBin,2,Values) of
 		false -> 
-			{Position1,Next_var} = state:next_variant(Position,Variant),
-			get_variant_values(Position1,Next_var,Values);
+			{Position1,Next_var} = state:next_variant(binary_to_term(PositionBin),Variant),
+			get_variant_values(term_to_binary(Position1),Next_var,Values);
 
-		{_,Position,Best_moves,Worst_moves} -> {Variant,Position,Best_moves,Worst_moves}
+		{_,PositionBin,Best_moves,Worst_moves} -> {Variant,PositionBin,Best_moves,Worst_moves}
 	end.
 
 
