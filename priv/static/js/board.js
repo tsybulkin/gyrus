@@ -5,48 +5,13 @@ function Board(parent, cellSize, callback) {
     active = typeof active !== 'undefined' ? active : false;
     // Mouse coordinates
     var x = 0, y = 0;
-    var matrix = [
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false]
-    ];
 
-    this.clear = function() {
-matrix = [
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false],
-      [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false]
-    ];
-    var circles = document.getElementsByClassName('circle');
-      for (var i = 0; i < circles.length; i++) {
-          var child = circles[i];
-          self.div.removeChild(child);
-      }
-      return circles.length;
+    this.clear = function () {
+        self.matrix = self._emptyMatrix()
+        var circles = self.div.getElementsByClassName('circle');
+        for (var i = circles.length; i--;) {
+            circles[i].remove();
+        }
     };
 
     // create background dom element
@@ -112,16 +77,16 @@ matrix = [
         ch.style.left = cell_size * (x - 1) - ch_size / 2 + x + 'px';
         ch.style.bottom = cell_size * (y - 1) - ch_size / 2 + y + 'px';
         board.appendChild(ch);
-        matrix[x - 1][y - 1] = true;
+        self.matrix[x - 1][y - 1] = true;
     };
 
     this.winChecker = function (x, y, color) {
-        if (matrix[x - 1][y - 1]) {
-            var ch = document.getElementById(x + '_' + y);
-            ch.className += ' win ';
+        if (self.matrix[x - 1][y - 1]) {
+            var ch = self.findChildById(board, x + '_' + y);
+            ch.className += ' win';
         }
         else {
-            self.addChecker(x, y, color, 'win');
+            self.addChecker(x, y, color, ' win ');
         }
     };
 
@@ -144,7 +109,7 @@ matrix = [
         }
 
         function _handleClick() {
-            if (!matrix[x - 1][y - 1]) {
+            if (!self.matrix[x - 1][y - 1]) {
                 callback(x, y);
             }
         }
@@ -153,6 +118,29 @@ matrix = [
         board.onclick = _handleClick;
     }
 
+    this._emptyMatrix = function () {
+        return _.range(size + 1).map(function (n) {
+            return _.range(size + 1).map(function (n) {
+                return false;
+            });
+        });
+    }
+
+    this.matrix = self._emptyMatrix();
+
+    this.findChildById = function (element, childID) {
+        var retElement = null;
+        var lstChildren = element.childNodes;
+
+        for (var i = 0; i < lstChildren.length; i++) {
+            if (lstChildren[i].id == childID) {
+                retElement = lstChildren[i];
+                break;
+            }
+        }
+
+        return retElement;
+    }
 
 }
 
@@ -167,7 +155,6 @@ function BoardConnection(board, baseUrl, color, level) {
     }
 
     function handle_message(msg) {
-        console.log(msg);
         var action = msg[0];
         if ('bot_move' == action) {
             board.not_thinking();
@@ -176,6 +163,7 @@ function BoardConnection(board, baseUrl, color, level) {
             board.addChecker(x, y, bots_color);
         }
         else if ('game_over' == action) {
+            console.log(msg);
             if ('man_lost' == msg[1]) {
                 var x_indices = _.range(2, 12, 2);
                 x_indices.forEach(function (x_index) {
@@ -232,7 +220,6 @@ function DemoBoardConnection(board, baseUrl) {
     var self = this;
 
     function handle_message(msg) {
-        console.log(msg);
         var action = msg[0];
         if ('demo_game_move' == action) {
             var color = msg[1];
@@ -241,20 +228,24 @@ function DemoBoardConnection(board, baseUrl) {
             board.addChecker(x, y, color);
         }
         else if ('demo_game_board' == action) {
-          var m = msg[1];
-          for (var x = 0; x < 15; x++)
-            for (var y = 0; y < 15; y++) {
-              var c = m[y][x];
-              if ('w' == c)
-                board.addChecker(x+1, y+1, 'whites');
-              else if ('b' == c)
-                board.addChecker(x+1, y+1, 'blacks');
-            }
+            var m = msg[1];
+            for (var x = 0; x < 15; x++)
+                for (var y = 0; y < 15; y++) {
+                    var c = m[y][x];
+                    if ('w' == c)
+                        board.addChecker(x + 1, y + 1, 'whites');
+                    else if ('b' == c)
+                        board.addChecker(x + 1, y + 1, 'blacks');
+                }
         }
-        else if ('demo_game_over' == action) {
+        else if ('demo_game_over' == action && msg[1] != 'draw') {
+            console.log(msg);
             var color = msg[1];
             var x_indices = _.range(2, 12, 2);
+            console.log(msg, x_indices);
             x_indices.forEach(function (x_index) {
+
+                console.log(x_index);
                 var x = msg[x_index];
                 var y = msg[x_index + 1];
                 board.winChecker(x, y, color);
