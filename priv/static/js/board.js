@@ -218,16 +218,22 @@ function BoardConnection(board, baseUrl, color, level) {
 
 function DemoBoardConnection(board, baseUrl) {
     var self = this;
+    this.newGame = true;
 
     function handle_message(msg) {
         var action = msg[0];
         if ('demo_game_move' == action) {
+            if (self.newGame) {
+		board.clear();
+		self.newGame = false;
+	    }
             var color = msg[1];
             var x = msg[2];
             var y = msg[3];
             board.addChecker(x, y, color);
         }
         else if ('demo_game_board' == action) {
+            self.newGame = false;
             var m = msg[1];
             for (var x = 0; x < 15; x++)
                 for (var y = 0; y < 15; y++) {
@@ -238,21 +244,32 @@ function DemoBoardConnection(board, baseUrl) {
                         board.addChecker(x + 1, y + 1, 'blacks');
                 }
         }
-        else if ('demo_game_over' == action && msg[1] != 'draw') {
-            console.log(msg);
-            var color = msg[1];
-            var x_indices = _.range(2, 12, 2);
-            console.log(msg, x_indices);
-            x_indices.forEach(function (x_index) {
-
-                console.log(x_index);
-                var x = msg[x_index];
-                var y = msg[x_index + 1];
-                board.winChecker(x, y, color);
-            });
-            board.clear();
+        else if ('demo_game_over' == action) {
+            self.newGame = true;
+            if (msg[1] != 'draw') {
+		    console.log(msg);
+		    var color = msg[1];
+		    var x_indices = _.range(2, 12, 2);
+		    console.log(msg, x_indices);
+		    x_indices.forEach(function (x_index) {
+			var x = msg[x_index];
+			var y = msg[x_index + 1];
+			board.winChecker(x, y, color);
+		    });
+            }
         }
+        else if ('counters' == action) {
+console.log('demo counters', msg);
+            var won = msg[1];
+            var draw = msg[2];
+            var lose = msg[3];
+            var done = msg[4];
 
+            document.getElementById('won').innerHTML = won;
+            document.getElementById('draw').innerHTML = draw;
+            document.getElementById('lose').innerHTML = lose;
+            document.getElementById('done').innerHTML = done;
+        }
     }
 
     var ws = new WebSocket(baseUrl + 'demo_game');

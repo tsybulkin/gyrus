@@ -22,6 +22,8 @@ websocket_info({demo_game_over,draw}, Req, State) ->
   {reply, {text, jsx:encode([demo_game_over,draw])}, Req, State};
 websocket_info({demo_game_board, Board}, Req, State) ->
   {reply, {text, jsx:encode([demo_game_board, Board])}, Req, State};
+websocket_info({counters, Won,Draw,Lost,GamesDone}, Req, State) ->
+  {reply, {text, jsx:encode([counters, Won,Draw,Lost,GamesDone])}, Req, State};
 websocket_info(Msg, Req, State) ->
   throw({ws, Msg}).
 
