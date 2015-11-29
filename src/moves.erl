@@ -91,7 +91,8 @@ get_good_moves(Me,Lines) ->
 	Moves = lists:foldl(fun(Line,Acc) -> rate_line(Me,Line)++Acc end,[],Lines), 
 	Sorted = lists:sort(fun({_,A},{_,B})-> A>B end, group(lists:sort(Moves))),
 	[{_,MaxRate}|_] = Sorted, Thr = 0.25*MaxRate,
-	pick_best(lists:filter(fun({_,R})-> R>=Thr end,Sorted),Thr+1).
+	Best = pick_best(lists:filter(fun({_,R})-> R>=Thr end,Sorted),Thr+1),
+	shuffle(Best).
 
 
 group([]) -> [];
@@ -147,6 +148,11 @@ pick_best(Ls,Thr) ->
 		true -> [XY ||{XY,_} <- Ls1]
 	end.
 
+
+
+shuffle(Moves) -> 
+	Shuffled = lists:zip([random:uniform() || _ <- lists:seq(1,length(Moves))], Moves),
+	[ Move || {_,Move} <- lists:sort(Shuffled)].
 
 
 
