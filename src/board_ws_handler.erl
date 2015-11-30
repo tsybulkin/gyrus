@@ -13,7 +13,9 @@ handle_client_msg([<<"player_move">>,X,Y], Req, S=#state{game_pid = GamePid}) ->
     {game_over,[{X1,Y1},{X2,Y2},{X3,Y3},{X4,Y4},{X5,Y5}],man_lost} ->
       [game_over, man_lost, X1,Y1, X2,Y2, X3,Y3, X4,Y4, X5,Y5];
     {game_over,[{X1,Y1},{X2,Y2},{X3,Y3},{X4,Y4},{X5,Y5}],man_won} ->
-      [game_over, man_won, X1,Y1, X2,Y2, X3,Y3, X4,Y4, X5,Y5]
+      [game_over, man_won, X1,Y1, X2,Y2, X3,Y3, X4,Y4, X5,Y5];
+    {game_over, draw} ->
+      [game_over, draw]
   end,
   {reply, {text, jsx:encode(Reply)}, Req, S}.
 

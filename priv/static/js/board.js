@@ -163,7 +163,6 @@ function BoardConnection(board, baseUrl, color, level) {
             board.addChecker(x, y, bots_color);
         }
         else if ('game_over' == action) {
-            console.log(msg);
             if ('man_lost' == msg[1]) {
                 var x_indices = _.range(2, 12, 2);
                 x_indices.forEach(function (x_index) {
@@ -181,6 +180,9 @@ function BoardConnection(board, baseUrl, color, level) {
                     board.winChecker(x, y, color);
                 });
                 board.message("You won!");
+            }
+            else {
+		board.message("Draw");
             }
         }
         else if ('counters' == action) {
