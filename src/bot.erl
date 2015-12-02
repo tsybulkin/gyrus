@@ -8,7 +8,7 @@
 -export([get_move/6, gyrus_name/1
 		]).
 
--define(NBR_EPISODES,100).
+-define(NBR_EPISODES,150).
 
 
 get_move(_Level,_,_,_,_,{1,_Board}) -> {8,8};
@@ -265,7 +265,7 @@ max_value(whites) -> 1.
 
 
 
-episodes_nbr(easy)  -> 24;
+episodes_nbr(easy)  -> 50;
 episodes_nbr(medium)-> ?NBR_EPISODES;
-episodes_nbr(hard)  -> ?NBR_EPISODES*8.
+episodes_nbr(hard)  -> ?NBR_EPISODES*5.
 
