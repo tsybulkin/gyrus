@@ -7,6 +7,10 @@
 -module(lines).
 -export([check_five/1,
 		extract_lines/1,
+		extract_vert_lines/2,
+		extract_hor_lines/2,
+		extract_diagonals1/1,
+		extract_diagonals2/1,
 		pick_5th/2,
 		pick_4th/2,
 		find_4/2,
@@ -16,7 +20,7 @@
 
 
 
-check_five({Turn,Board}) -> 
+check_five({Turn,Board,_}) -> 
 	case game:color(Turn) of
 		blacks -> check_five(board, w,Board);
 		whites -> check_five(board, b,Board)
@@ -45,7 +49,9 @@ check_five_in_line(_,_,_,[]) -> false.
 extract_lines(Board) ->
 	extract_vert_lines(15,Board) ++
 	extract_hor_lines(15,Board) ++
-	extract_diagonals(Board).
+	extract_diagonals1(Board)++
+	extract_diagonals2(Board).
+
 
 
 extract_vert_lines(0,_) -> [];
@@ -57,9 +63,11 @@ extract_hor_lines(N,Board) ->
 	[ { {1,N}, {15,N}, tuple_to_list(element(N, Board)) } | extract_hor_lines(N-1,Board) ].
 
 
-extract_diagonals(Board) ->
+extract_diagonals1(Board) ->
 	[{{1,1-H},{15+H,15},[ element(I, element(I-H,Board)) || I <- lists:seq(1,15+H) ]} || H <- lists:seq(-10,0) ] ++
-	[{{1+H,1},{15,15-H},[ element(I, element(I-H,Board)) || I <- lists:seq(1+H,15) ]} || H <- lists:seq(1,10) ] ++
+	[{{1+H,1},{15,15-H},[ element(I, element(I-H,Board)) || I <- lists:seq(1+H,15) ]} || H <- lists:seq(1,10) ].
+
+extract_diagonals2(Board) ->
 	[{{1,H-1},{H-1,1},[ element(I, element(H-I,Board)) || I <- lists:seq(1,H-1) ]} || H <- lists:seq(6,16) ] ++
 	[{{H-15,15},{15,H-15},[ element(I, element(H-I,Board)) || I <- lists:seq(H-15,15) ]} || H <- lists:seq(17,26) ].
 	

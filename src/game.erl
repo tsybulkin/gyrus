@@ -9,12 +9,12 @@
 -export([game_manager/7,
     game_manager_call/1,
 		start_new_game/5, start_new_bot_game/2, start_new_demo_game/2,
-		change_state/2,
+		% change_state/2,
 		color/1
 		]).
 
 -define(HUMAN_BOT_GAMES_LIMIT, 50).
--define(BOT_BOT_GAMES_LIMIT, 4).
+-define(BOT_BOT_GAMES_LIMIT, 1).
 
 start_link() ->
 	Schedule = [],
@@ -31,8 +31,8 @@ game_manager_call(Request) ->
 
 
 game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone) ->
-	%io:format("Human-Bot games: ~p  Bot-Bot games: ~p Total games played: ~p~n",
-	%	[length(Human_bot_games),Bot_bot_gameNBR, GamesDone]),
+	io:format("Human-Bot games: ~p  Bot-Bot games: ~p Total games played: ~p~n",
+		[length(Human_bot_games),Bot_bot_gameNBR, GamesDone]),
 	receive
 		{new_game_request, WS, Color, Level} ->
 			io:format("~p~n", [{new_game_request, WS, Color, Level}]),
@@ -154,7 +154,7 @@ run_bot_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,S
 	Move = bot:get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,State),
 	%io:format("Bot move:~p, State:~p~n",[Move,State]),
 	%Move = rand:rand(State),
-	case change_state(State,Move) of
+	case state:change_state(State,Move) of
 		{blacks_won,_Fiver} -> GS ! bot_game_over;
 		{whites_won,_Fiver} -> GS ! bot_game_over;
 		draw -> GS ! bot_game_over;
@@ -193,7 +193,7 @@ run_demo_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,
 	%io:format("Bot move:~p, State:~p~n",[Move,State]),
 	%Move = rand:rand(State),
 
-	Result = case change_state(State,Move) of
+	case state:change_state(State,Move) of
 		{blacks_won,Fiver} ->
 			game_manager ! {demo_game_over, Pids1},
 			distribute({demo_game_over,blacks,Fiver}, Pids1), start_new_demo_game(Schedule,GS,Pids1);
@@ -227,7 +227,7 @@ run_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn
 			Move = bot:get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,State),
 			%io:format("Bot move:~p, State:~p~n",[Move,State]),
 			%Move = rand:rand(State),
-			case change_state(State,Move) of
+			case state:change_state(State,Move) of
 				{Won,Fiver} when blacks_won==Won; whites_won==Won -> GS ! {game_over, WS, self(), Fiver, man_lost}, gyri:save_gyri();
 				draw -> GS ! {game_over, WS, self(), draw}, gyri:save_gyri();
 				NextState -> GS ! {bot_move, WS, self(), Move},
@@ -238,7 +238,7 @@ run_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn
 				quit -> ok;		
 				{move, Move} ->
 					%io:format("Human move:~p, State:~p~n",[Move,State]),
-					case change_state(State,Move) of
+					case state:change_state(State,Move) of
 						{Won,Fiver} when blacks_won==Won; whites_won==Won -> GS ! {game_over, WS, self(), Fiver,man_won}, gyri:save_gyri();
 						draw -> GS ! {game_over, WS, self(), draw}, gyri:save_gyri();
 						NextState -> run_game(Schedule,GS,Level,OppPrevState,OppPrevMove,State,Move,NextState,Color,WS)
@@ -248,32 +248,32 @@ run_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn
 
 
 
-change_state({Turn,Board},{I,J}) ->
-	case moves:legal_move({I,J},Board) of
-		true ->
-			%io:format("~nNew ~p move:(~p,~p)~n",[Turn,I,J]),
-			Row1 = erlang:delete_element(I,element(J,Board)),
-			Board1 = erlang:delete_element(J,Board),
-			case color(Turn) of
-				whites -> Row2 = erlang:insert_element(I,Row1,w);
-				blacks -> Row2 = erlang:insert_element(I,Row1,b)
-			end,
-			Next_state = {Turn+1, erlang:insert_element(J,Board1,Row2)};
+% change_state({Turn,Board},{I,J}) ->
+% 	case moves:legal_move({I,J},Board) of
+% 		true ->
+% 			%io:format("~nNew ~p move:(~p,~p)~n",[Turn,I,J]),
+% 			Row1 = erlang:delete_element(I,element(J,Board)),
+% 			Board1 = erlang:delete_element(J,Board),
+% 			case color(Turn) of
+% 				whites -> Row2 = erlang:insert_element(I,Row1,w);
+% 				blacks -> Row2 = erlang:insert_element(I,Row1,b)
+% 			end,
+% 			Next_state = {Turn+1, erlang:insert_element(J,Board1,Row2)};
 
-		_ ->
-			io:format("Illegal move: ~p~n",[{I,J}]),
-			Next_state = illegal_state
-	end,
+% 		_ ->
+% 			io:format("Illegal move: ~p~n",[{I,J}]),
+% 			Next_state = illegal_state
+% 	end,
 
-	case lines:check_five(Next_state) of
-		false when Turn =:= 59 -> draw;
-		false -> Next_state;
-		Fiver -> 
-			case color(Turn+1) of
-				whites -> {blacks_won,Fiver};
-				blacks -> {whites_won,Fiver}
-			end	
-	end.	
+% 	case lines:check_five(Next_state) of
+% 		false when Turn =:= 59 -> draw;
+% 		false -> Next_state;
+% 		Fiver -> 
+% 			case color(Turn+1) of
+% 				whites -> {blacks_won,Fiver};
+% 				blacks -> {whites_won,Fiver}
+% 			end	
+% 	end.	
 
 
 

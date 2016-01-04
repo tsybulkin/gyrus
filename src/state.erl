@@ -5,14 +5,41 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -module(state).
--export([init_state/0, init_state1/0, t/0, print_board/1, print_state/1,
+-export([init_state/0, init_state1/0, print_board/1, print_state/1,
 		board_to_position/1,
+		change_state/2,
 		get_key/1,
+		color/1,
 		next_variant/2,
 		back_transform/4, transform/4,
 		reflect/2,
 		filter_legal/6
 		]).
+
+
+change_state({Turn,Board,Eval},{I,J}) ->
+	Color = color(Turn),
+	e = element(I,element(J,Board)),
+
+	%io:format("~nmove ~p: {~p,~p}~n",[Turn,I,J]),
+	Row1 = erlang:delete_element(I,element(J,Board)),
+	Board1 = erlang:delete_element(J,Board),
+	case Color of
+		whites -> Row2 = erlang:insert_element(I,Row1,w);
+		blacks -> Row2 = erlang:insert_element(I,Row1,b)
+	end,
+	Next_state = {Turn+1,Board2=erlang:insert_element(J,Board1,Row2), eval:change_evaluation(Eval,{I,J},Color)},
+	print_board(Board2),
+
+	case lines:check_five(Next_state) of
+		false when Turn =:= 59 -> draw;
+		false -> Next_state;
+		Fiver -> 
+			case Color of
+				blacks -> {blacks_won,Fiver};
+				whites -> {whites_won,Fiver}
+			end	
+	end.	
 
 
 
@@ -91,8 +118,8 @@ filter_legal(Moves,X0,Y0,Variant,Position,State) ->
 
 
 
-legal_place(X,Y,{_Turn,_Board}) when X<1; X>15; Y<1; Y>15 -> false;
-legal_place(X,Y,{_,Board}) -> 
+legal_place(X,Y,{_Turn,_Board,_}) when X<1; X>15; Y<1; Y>15 -> false;
+legal_place(X,Y,{_,Board,_}) -> 
 	case moves:legal_move({X,Y},Board) of
 		false -> error;
 		true -> true
@@ -149,7 +176,7 @@ cVar(Cx,Cy,Variant) ->
 	end.
 	
 
-print_state({Turn,Board}) -> io:format("Turn:~p~n",[Turn]), print_board(Board).
+print_state({Turn,Board,_}) -> io:format("Turn:~p~n",[Turn]), print_board(Board).
 
 
 
@@ -179,7 +206,7 @@ print_stones(Acc,[]) ->
 
 
 init_state() ->
-	{1,
+	Board=
 	{{e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
 	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
 	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e}, 
@@ -194,11 +221,11 @@ init_state() ->
 	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
 	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
 	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
-	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e}}
-	 }.
+	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e}},
+	{1, Board, init_evaluation(Board) }.
 
 init_state1() ->
-	{2,
+	Board =
 	{{e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
 	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
 	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e}, 
@@ -213,43 +240,37 @@ init_state1() ->
 	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
 	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
 	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
-	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e}}
-	 }.
-
-
-
-%%%%%%  T E S T S  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-t() ->
-	Board = {
-	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
-	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
-	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e}, 
-	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
-	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
-	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
-	 {e,e,e,e,e,w,e,e,e,e,e,b,e,e,e},
-	 {e,e,e,e,e,e,e,e,e,e,b,e,e,e,e},
-	 {e,e,e,e,b,e,e,w,e,e,e,e,e,e,e},
-	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
-	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
-	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
-	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
-	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
 	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e}},
+	{2,Board,init_evaluation(Board) }.
 
-	case St=board_to_position(Board) == {4,6,Pos={
-											 	{e,w,e,e,e,e,e,b},
-											 	{e,e,e,e,e,e,b,e},
-											 	{b,e,e,w,e,e,e,e}}} of
-		true -> ok;
-		_ -> error(St)
-	end,
-	get_key(Pos),
-	lists:foldl(fun(J,P)-> 
-					{P1,_} = next_variant(P,J),
-					io:format("~p~n",[get_key(P1)]),
-					P1
-				end,Pos,lists:seq(1,7)).
+
+ init_evaluation(Board) ->
+	Lv = lines:extract_vert_lines(15,Board),
+	V = list_to_tuple(lists:foldl(fun({_,_,L},Acc)->
+		L1 = lists:reverse(L),
+		[list_to_tuple([ fiver:state(lists:sublist(L1,J,5)) || J <- lists:seq(1,11)]) | Acc]
+	end,[],Lv)),
+
+	Lh = lines:extract_hor_lines(15,Board),
+	H = list_to_tuple(lists:foldl(fun({_,_,L},Acc)->
+		[list_to_tuple([ fiver:state(lists:sublist(L,J,5)) || J <- lists:seq(1,11)]) | Acc]
+	end,[],Lh)),
+
+	Ld1 = lists:reverse(lines:extract_diagonals1(Board)),
+	D1 = list_to_tuple(lists:foldl(fun({_,_,L},Acc)->
+		[list_to_tuple([ fiver:state(lists:sublist(L,J,5)) || J <- lists:seq(1,length(L)-4)]) | Acc]
+	end,[],Ld1)),
+
+	Ld2 = lists:reverse(lines:extract_diagonals2(Board)),
+	D2 = list_to_tuple(lists:foldl(fun({_,_,L},Acc)->
+		[list_to_tuple([ fiver:state(lists:sublist(L,J,5)) || J <- lists:seq(1,length(L)-4)]) | Acc]
+	end,[],Ld2)),
+
+	{V,H,D1,D2,fiver:count(V,H,D1,D2)}.
+
+
+
+color(Turn) when Turn rem 2 =:= 0 -> whites;
+color(_Turn) -> blacks.
 
 

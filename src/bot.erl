@@ -12,7 +12,7 @@
 
 
 get_move(_Level,_,_,_,_,{1,_Board}) -> {8,8};
-get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,_}=State) ->
+get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,_,_}=State) ->
 	%state:print_board(Board),
 	%io:format("~n * * Turn:~p ~n",[Turn]),
 	case get_best_worst_state_moves(State) of
