@@ -7,7 +7,7 @@
 -module(game).
 -export([start_link/0]).
 -export([game_manager/7,
-    game_manager_call/1,
+    	game_manager_call/1,
 		start_new_game/5, start_new_bot_game/2, start_new_demo_game/2,
 		% change_state/2,
 		color/1
@@ -31,8 +31,8 @@ game_manager_call(Request) ->
 
 
 game_manager(Schedule,Human_bot_games,Bot_bot_gameNBR,Won,Draw,Lost,GamesDone) ->
-	io:format("Human-Bot games: ~p  Bot-Bot games: ~p Total games played: ~p~n",
-		[length(Human_bot_games),Bot_bot_gameNBR, GamesDone]),
+	%io:format("Human-Bot games: ~p  Bot-Bot games: ~p Total games played: ~p~n",
+	%	[length(Human_bot_games),Bot_bot_gameNBR, GamesDone]),
 	receive
 		{new_game_request, WS, Color, Level} ->
 			io:format("~p~n", [{new_game_request, WS, Color, Level}]),
@@ -167,7 +167,7 @@ start_new_demo_game(Schedule,GS) ->
 start_new_demo_game(Schedule,GS,Subscribers) ->
 	State = state:init_state(),
 	timer:sleep(3000),
-	%GS ! new_demo_game,
+	GS ! new_demo_game,
 	run_demo_game(Schedule,GS,medium,none,none,none,none,State,Subscribers).
 
 distribute(Message, Pids) ->
@@ -176,21 +176,21 @@ distribute(Message, Pids) ->
     Pid ! Message
   end, sets:to_list(Pids)).
 
-run_demo_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,State,Pids) ->
-        Pids1 = receive
-          {subscribe, Pid} ->
-            {_, Board} = State,
-            Board1 = lists:map(fun tuple_to_list/1, tuple_to_list(Board)),
-            Pid ! {demo_game_board, Board1},
-            sets:add_element(Pid, Pids);
-          {unsubscribe, Pid} ->
-            sets:del_element(Pid, Pids)
-        after 0 ->
-          Pids
-        end,
+run_demo_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,Board,_}=State,Pids) ->
+	io:format("Demo game next move~n"),
+	Pids1 = receive
+      {subscribe, Pid} ->
+       	Board1 = lists:map(fun tuple_to_list/1, tuple_to_list(Board)),
+        Pid ! {demo_game_board, Board1},
+        sets:add_element(Pid, Pids);
+      {unsubscribe, Pid} ->
+        sets:del_element(Pid, Pids)
+    after 0 ->
+      Pids
+    end,
 
-	Move = bot:get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,_}=State),
-	%io:format("Bot move:~p, State:~p~n",[Move,State]),
+	Move = bot:get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,State),
+	io:format("Bot move:~p~n",[Move]), state:print_board(Board),
 	%Move = rand:rand(State),
 
 	case state:change_state(State,Move) of
@@ -245,35 +245,6 @@ run_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn
 					end
 			end
 	end.
-
-
-
-% change_state({Turn,Board},{I,J}) ->
-% 	case moves:legal_move({I,J},Board) of
-% 		true ->
-% 			%io:format("~nNew ~p move:(~p,~p)~n",[Turn,I,J]),
-% 			Row1 = erlang:delete_element(I,element(J,Board)),
-% 			Board1 = erlang:delete_element(J,Board),
-% 			case color(Turn) of
-% 				whites -> Row2 = erlang:insert_element(I,Row1,w);
-% 				blacks -> Row2 = erlang:insert_element(I,Row1,b)
-% 			end,
-% 			Next_state = {Turn+1, erlang:insert_element(J,Board1,Row2)};
-
-% 		_ ->
-% 			io:format("Illegal move: ~p~n",[{I,J}]),
-% 			Next_state = illegal_state
-% 	end,
-
-% 	case lines:check_five(Next_state) of
-% 		false when Turn =:= 59 -> draw;
-% 		false -> Next_state;
-% 		Fiver -> 
-% 			case color(Turn+1) of
-% 				whites -> {blacks_won,Fiver};
-% 				blacks -> {whites_won,Fiver}
-% 			end	
-% 	end.	
 
 
 

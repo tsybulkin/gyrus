@@ -2,7 +2,8 @@
 
 
 -module(eval).
--export([change_evaluation/3
+-export([change_evaluation/3,
+		init_evaluation/1
 		]).
 
 
@@ -34,12 +35,12 @@ init_evaluation(Board) ->
 
 % internal representation of the state. 
 % Eval = {Vert,Hor,Diag1,Diag2,Counters}
-change_evaluation(no_evaluation, {8,8}, blacks) -> 
-	{2,{8,8},Board} = state:init_state([{8,8}]),
-	init_evaluation(Board);
+%change_evaluation(_, {8,8}, blacks) -> 
+%	{2,_Board,Eval} = state:init_state1(),
+%	Eval;
 
 change_evaluation({Vert,Hor,D1,D2,Cnts}, {I,J}, OppColor) -> 
-	%io:format("before move:~p~n",[dict:to_list(Cnts)]),
+	io:format("before move:~p~n",[dict:to_list(Cnts)]),
 	Column = element(I,Vert),
 	{Cnts1,Column1} = lists:foldl(fun(N,{Dict,Col})->
 		S = element(N,Col),
@@ -100,5 +101,6 @@ change_evaluation({Vert,Hor,D1,D2,Cnts}, {I,J}, OppColor) ->
 			D21 = erlang:delete_element(D2_index,D2),
 			D22 = erlang:insert_element(D2_index,D21,Diag12)
 	end,
-	%io:format("~p~n",[dict:to_list(Cnts4)]),
+	io:format("~p~n",[dict:to_list(Cnts4)]),
 	{Vert2,Hor2,D12,D22,Cnts4}.
+

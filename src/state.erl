@@ -5,7 +5,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -module(state).
--export([init_state/0, init_state1/0, print_board/1, print_state/1,
+-export([init_state/0, init_state/1, init_state1/0, print_board/1, print_state/1,
 		board_to_position/1,
 		change_state/2,
 		get_key/1,
@@ -20,6 +20,7 @@
 change_state({Turn,Board,Eval},{I,J}) ->
 	Color = color(Turn),
 	e = element(I,element(J,Board)),
+	%print_board(Board),
 
 	%io:format("~nmove ~p: {~p,~p}~n",[Turn,I,J]),
 	Row1 = erlang:delete_element(I,element(J,Board)),
@@ -84,6 +85,7 @@ find_empty_columns([],MinInd,MaxInd) -> {MinInd,MaxInd}.
 
 
 get_key(Position) ->
+	io:format("Position:~p~n",[Position]),
 	Cy = size(Position) + 1,
 	Cx = size(element(1,Position)) + 1,
 	{Ws,Bs} = lists:foldl(
@@ -98,6 +100,7 @@ get_key(Position) ->
 					end
 				end, {Ws1,Bs1}, lists:seq(1,Cx-1))
 		end,{[],[]},lists:seq(1,Cy-1)),
+	io:format("Ws:~p ,Bs:~p~n",[Ws,Bs]),
 	{lists:sort(Ws),lists:sort(Bs)}.
 
 
@@ -222,7 +225,7 @@ init_state() ->
 	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
 	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
 	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e}},
-	{1, Board, init_evaluation(Board) }.
+	{1, Board, eval:init_evaluation(Board) }.
 
 init_state1() ->
 	Board =
@@ -241,7 +244,13 @@ init_state1() ->
 	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
 	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e},
 	 {e,e,e,e,e,e,e,e,e,e,e,e,e,e,e}},
-	{2,Board,init_evaluation(Board) }.
+	{2,Board,eval:init_evaluation(Board) }.
+
+init_state(Moves) -> init_state(init_state(),Moves).
+
+init_state(State,[Move|Moves]) -> init_state(state:change_state(State,Move),Moves);
+init_state(State,[]) -> State.
+
 
 
  init_evaluation(Board) ->

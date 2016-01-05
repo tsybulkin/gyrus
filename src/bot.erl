@@ -8,18 +8,18 @@
 -export([get_move/6, gyrus_name/1
 		]).
 
--define(NBR_EPISODES,150).
+-define(NBR_EPISODES,15).
 
 
-get_move(_Level,_,_,_,_,{1,_Board}) -> {8,8};
+get_move(_Level,_,_,_,_,{1,_Board,_}) -> {8,8};
 get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,_,_}=State) ->
 	%state:print_board(Board),
 	%io:format("~n * * Turn:~p ~n",[Turn]),
 	case get_best_worst_state_moves(State) of
-		no_policy -> %io:format("no_policy ~n"),
+		no_policy -> io:format("no_policy ~n"),
 			Moves = moves:get_selected_moves(State),
 			N = episodes_nbr(Level),
-			%io:format("doing simulations for moves: ~p~n",[Moves]),
+			io:format("doing simulations for moves: ~p~n",[Moves]),
 			get_best_simulation(OppPrevState,OppPrevMove,Moves,State,N);
 			
 		{worst_moves,Worst_moves} -> 
@@ -49,9 +49,9 @@ get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,_,_}=State)
 
 
 
-get_best_simulation(PrevState,PrevMove,Moves,{Turn,_}=State,N) ->
+get_best_simulation(PrevState,PrevMove,Moves,{Turn,_,_}=State,N) ->
 	Scores = monte_carlo(PrevState,PrevMove,State,Moves, N div length(Moves)),	
-	%io:format("~nScores: ~p~n",[Scores]),
+	io:format("~nScores: ~p~n",[Scores]),
 
 	Best_moves = lists:sublist([XY || {_,XY}<-Scores],3),
 	N_per_move = N div length(Best_moves),
@@ -60,18 +60,13 @@ get_best_simulation(PrevState,PrevMove,Moves,{Turn,_}=State,N) ->
 
 	[{Rmax,_Move}|_] = Refined,
 	rand:pick_randomly([ Move ||{R,Move} <- Refined, R=:=Rmax]).
-	%if abs(Score) =:= N_per_move -> 
-	%	learn(State,Move,Score div N_per_move),
-	%	learn(PrevState,PrevMove,Score div N_per_move); 
-	%	true -> ok 
-	%end,
+	
 
 
 
-
-monte_carlo(PrevState,PrevMove,{Turn,_}=State,Moves,Simulation_Nbr) ->
+monte_carlo(PrevState,PrevMove,{Turn,_,_}=State,Moves,Simulation_Nbr) ->
 	Depth = 1+round(2 * math:log(1+Simulation_Nbr) ),
-	%io:format("Monte carlo over: ~p~n",[Moves]),
+	%io:format("Monte carlo is over: ~p~n",[Moves]),
 	lists:sort( fun({A,_},{B,_})-> A>B end,lists:foldl(
 		fun(Move,Acc) ->
 			CumScore = 
@@ -89,8 +84,8 @@ monte_carlo(PrevState,PrevMove,{Turn,_}=State,Moves,Simulation_Nbr) ->
 
 
 
-run_episode(PrevState,PrevMove,{Turn,_}=State,Depth,Move) ->
-	case game:change_state(State,Move) of
+run_episode(PrevState,PrevMove,{Turn,_,_}=State,Depth,Move) ->
+	case state:change_state(State,Move) of
 		{blacks_won,_Fiver} -> learn(State,Move,-1),learn(PrevState,PrevMove,-1),-1;
 		{whites_won,_Fiver} -> learn(State,Move, 1),learn(PrevState,PrevMove, 1), 1;
 		draw -> 0;
@@ -119,8 +114,8 @@ run_episode(PrevState,PrevMove,{Turn,_}=State,Depth,Move) ->
 %% ets table must be created as [named_table,bag]
 learn(_,_,0) -> ok;
 learn(none,none,-1) -> ok;
-learn({1,_},Move,Val) -> io:format("~ngame solved for the move: ~p!~nblacks won: ~p~n",[Move,Val]);
-learn({Turn,Board},{X,Y},Next_state_value) ->
+learn({1,_,_},Move,Val) -> io:format("~ngame solved for the move: ~p!~nblacks won: ~p~n",[Move,Val]);
+learn({Turn,Board,_},{X,Y},Next_state_value) ->
 	{X0,Y0,Position} = state:board_to_position(Board),
 	X1=X-X0, Y1=Y-Y0,
 	Key = state:get_key(Position),	
@@ -184,7 +179,7 @@ save_worst_move(X,Y,Position,Key,Gyrus) ->
 
 
 
-get_policy_value({Turn,_}=State) ->
+get_policy_value({Turn,_,_}=State) ->
 	case get_best_worst_state_moves(State) of
 		no_policy -> %io:format("no_policy for state:~p~n",[State]),
 			{rand:pick_randomly(moves:get_selected_moves(State)),0};
@@ -202,7 +197,7 @@ get_policy_value({Turn,_}=State) ->
 
 
 
-get_best_worst_state_moves({Turn,Board}) ->
+get_best_worst_state_moves({Turn,Board,Eval}) ->
 	{X0,Y0,Position} = state:board_to_position(Board),
 	Key = state:get_key(Position),
 	Gyrus = gyrus_name(Turn),
@@ -214,7 +209,7 @@ get_best_worst_state_moves({Turn,Board}) ->
 			case match_position(Position,Variant1,Values) of
 				no_match -> no_policy;
 				{Type,Moves,Variant} -> 
-					case state:filter_legal(Moves,X0,Y0,Variant,Position,{Turn,Board}) of 
+					case state:filter_legal(Moves,X0,Y0,Variant,Position,{Turn,Board,Eval}) of 
 						[] -> no_policy;
 						Filtered -> {Type,Filtered}
 					end
