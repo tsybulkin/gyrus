@@ -30,7 +30,7 @@ change_state({Turn,Board,Eval},{I,J}) ->
 		blacks -> Row2 = erlang:insert_element(I,Row1,b)
 	end,
 	Next_state = {Turn+1,Board2=erlang:insert_element(J,Board1,Row2), eval:change_evaluation(Eval,{I,J},Color)},
-	print_board(Board2),
+	%print_board(Board2),
 
 	case lines:check_five(Next_state) of
 		false when Turn =:= 59 -> draw;
@@ -85,7 +85,7 @@ find_empty_columns([],MinInd,MaxInd) -> {MinInd,MaxInd}.
 
 
 get_key(Position) ->
-	io:format("Position:~p~n",[Position]),
+	%io:format("Position:~p~n",[Position]),
 	Cy = size(Position) + 1,
 	Cx = size(element(1,Position)) + 1,
 	{Ws,Bs} = lists:foldl(
@@ -100,7 +100,7 @@ get_key(Position) ->
 					end
 				end, {Ws1,Bs1}, lists:seq(1,Cx-1))
 		end,{[],[]},lists:seq(1,Cy-1)),
-	io:format("Ws:~p ,Bs:~p~n",[Ws,Bs]),
+	%io:format("Ws:~p ,Bs:~p~n",[Ws,Bs]),
 	{lists:sort(Ws),lists:sort(Bs)}.
 
 

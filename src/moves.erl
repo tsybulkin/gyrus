@@ -102,7 +102,7 @@ get_good_moves({Turn,_,Eval}=State) ->
 	[{_,MaxRate}|_]=SortedMoves=lists:sort(fun({_,R1},{_,R2})-> R1>R2 end, RatedMoves),
 	Shift = 50 - MaxRate, Thld = 50*?THRESHOLD,
 	Selected = lists:filter(fun({_,R})-> R+Shift > Thld end,SortedMoves),
-	io:format("Good moves: ~p~n",[Selected]),
+	%io:format("Good moves: ~p~n",[Selected]),
 	[ M ||{M,_} <- Selected ].
 	
 

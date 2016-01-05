@@ -177,7 +177,7 @@ distribute(Message, Pids) ->
   end, sets:to_list(Pids)).
 
 run_demo_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,Board,_}=State,Pids) ->
-	io:format("Demo game next move~n"),
+	%io:format("Demo game next move~n"),
 	Pids1 = receive
       {subscribe, Pid} ->
        	Board1 = lists:map(fun tuple_to_list/1, tuple_to_list(Board)),
@@ -190,7 +190,7 @@ run_demo_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,
     end,
 
 	Move = bot:get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,State),
-	io:format("Bot move:~p~n",[Move]), state:print_board(Board),
+	%io:format("Bot move:~p~n",[Move]), state:print_board(Board),
 	%Move = rand:rand(State),
 
 	case state:change_state(State,Move) of
@@ -202,7 +202,7 @@ run_demo_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,
 			distribute({demo_game_over,whites,Fiver}, Pids1), start_new_demo_game(Schedule,GS,Pids1);
 		draw -> 
 			game_manager ! {demo_game_over,Pids1},
-                  	distribute({demo_game_over,draw}, Pids1), start_new_demo_game(Schedule,GS,Pids1);
+            distribute({demo_game_over,draw}, Pids1), start_new_demo_game(Schedule,GS,Pids1);
 		NextState -> 
 			distribute({demo_game_move,color(Turn),Move}, Pids1),
 			run_demo_game(Schedule,GS,Level,OppPrevState,OppPrevMove,State,Move,NextState, Pids1)

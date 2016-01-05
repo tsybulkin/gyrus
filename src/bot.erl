@@ -8,7 +8,7 @@
 -export([get_move/6, gyrus_name/1
 		]).
 
--define(NBR_EPISODES,15).
+-define(NBR_EPISODES,100).
 
 
 get_move(_Level,_,_,_,_,{1,_Board,_}) -> {8,8};
@@ -16,10 +16,10 @@ get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,_,_}=State)
 	%state:print_board(Board),
 	%io:format("~n * * Turn:~p ~n",[Turn]),
 	case get_best_worst_state_moves(State) of
-		no_policy -> io:format("no_policy ~n"),
+		no_policy -> %io:format("no_policy ~n"),
 			Moves = moves:get_selected_moves(State),
 			N = episodes_nbr(Level),
-			io:format("doing simulations for moves: ~p~n",[Moves]),
+			%io:format("doing simulations for moves: ~p~n",[Moves]),
 			get_best_simulation(OppPrevState,OppPrevMove,Moves,State,N);
 			
 		{worst_moves,Worst_moves} -> 
@@ -51,12 +51,12 @@ get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,_,_}=State)
 
 get_best_simulation(PrevState,PrevMove,Moves,{Turn,_,_}=State,N) ->
 	Scores = monte_carlo(PrevState,PrevMove,State,Moves, N div length(Moves)),	
-	io:format("~nScores: ~p~n",[Scores]),
+	%io:format("~nScores: ~p~n",[Scores]),
 
 	Best_moves = lists:sublist([XY || {_,XY}<-Scores],3),
 	N_per_move = N div length(Best_moves),
 	Refined = monte_carlo(PrevState,PrevMove,State,Best_moves, N_per_move),	
-	io:format("Turn:~p  Refined moves: ~p~n",[Turn,Refined]),
+	%io:format("Turn:~p  Refined moves: ~p~n",[Turn,Refined]),
 
 	[{Rmax,_Move}|_] = Refined,
 	rand:pick_randomly([ Move ||{R,Move} <- Refined, R=:=Rmax]).

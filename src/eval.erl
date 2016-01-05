@@ -40,7 +40,7 @@ init_evaluation(Board) ->
 %	Eval;
 
 change_evaluation({Vert,Hor,D1,D2,Cnts}, {I,J}, OppColor) -> 
-	io:format("before move:~p~n",[dict:to_list(Cnts)]),
+	%io:format("before move:~p~n",[dict:to_list(Cnts)]),
 	Column = element(I,Vert),
 	{Cnts1,Column1} = lists:foldl(fun(N,{Dict,Col})->
 		S = element(N,Col),
@@ -101,6 +101,6 @@ change_evaluation({Vert,Hor,D1,D2,Cnts}, {I,J}, OppColor) ->
 			D21 = erlang:delete_element(D2_index,D2),
 			D22 = erlang:insert_element(D2_index,D21,Diag12)
 	end,
-	io:format("~p~n",[dict:to_list(Cnts4)]),
+	%io:format("~p~n",[dict:to_list(Cnts4)]),
 	{Vert2,Hor2,D12,D22,Cnts4}.
 
