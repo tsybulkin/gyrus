@@ -56,7 +56,7 @@ get_best_simulation(PrevState,PrevMove,Moves,{Turn,_,_}=State,N) ->
 	Best_moves = lists:sublist([XY || {_,XY}<-Scores],3),
 	N_per_move = N div length(Best_moves),
 	Refined = monte_carlo(PrevState,PrevMove,State,Best_moves, N_per_move),	
-	%io:format("Turn:~p  Refined moves: ~p~n",[Turn,Refined]),
+	io:format("Turn:~p  Refined moves: ~p~n",[Turn,Refined]),
 
 	[{Rmax,_Move}|_] = Refined,
 	rand:pick_randomly([ Move ||{R,Move} <- Refined, R=:=Rmax]).

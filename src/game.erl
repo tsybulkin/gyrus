@@ -14,7 +14,7 @@
 		]).
 
 -define(HUMAN_BOT_GAMES_LIMIT, 50).
--define(BOT_BOT_GAMES_LIMIT, 1).
+-define(BOT_BOT_GAMES_LIMIT, 4).
 
 start_link() ->
 	Schedule = [],
@@ -221,7 +221,7 @@ start_new_game(Schedule,GS,Level,whites,WS) -> %% run Agent vs. Bot
 	OppPrevMove = {8,8},
 	run_game(Schedule,GS,Level,none,none,OppPrevState,OppPrevMove,State,whites,WS).
 
-run_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,_Board}=State,Color,WS) ->
+run_game(Schedule,GS,Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,{Turn,_Board,_}=State,Color,WS) ->
 	case color(Turn) =:= Color of
 		true -> % your move
 			Move = bot:get_move(Level,MyPrevState,MyPrevMove,OppPrevState,OppPrevMove,State),
