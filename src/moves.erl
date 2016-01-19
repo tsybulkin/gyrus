@@ -12,7 +12,7 @@
 		legal_move/2
 		]).
 
--define(THRESHOLD,0.75).
+-define(THRESHOLD,0.66).
 
 -define(MY_SINGL,0).
 -define(OPP_SINGL,-0.5).

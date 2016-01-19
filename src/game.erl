@@ -166,6 +166,7 @@ start_new_demo_game(Schedule,GS) ->
 
 start_new_demo_game(Schedule,GS,Subscribers) ->
 	State = state:init_state(),
+	io:format("~nViewers: ~p~n",[length(Subscribers)]),
 	timer:sleep(3000),
 	GS ! new_demo_game,
 	run_demo_game(Schedule,GS,medium,none,none,none,none,State,Subscribers).
