@@ -14,16 +14,16 @@
 
 -define(THRESHOLD,0.66).
 
--define(MY_SINGL,0).
--define(OPP_SINGL,-0.5).
--define(MY_DUPL,2).
--define(OPP_DUPL,-4).
--define(MY_TRIPL,7).
--define(OPP_TRIPL,-14).
--define(MY_QUART,26).
--define(OPP_QUART,-51).
--define(MY_QUINT,100).
--define(OPP_QUINT,-100).
+-define(MY_SINGL,0.078).
+-define(OPP_SINGL,-0.78).
+-define(MY_DUPL,1.51).
+-define(OPP_DUPL,-4.17).
+-define(MY_TRIPL,6.7).
+-define(OPP_TRIPL,-14.1).
+-define(MY_QUART,25).
+-define(OPP_QUART,-39).
+-define(MY_QUINT,85).
+-define(OPP_QUINT,-51).
 -define(FREE,0).
 -define(MIXED,0).
 
