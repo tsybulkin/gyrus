@@ -15,7 +15,7 @@ start() ->
   ok = application:start(ranch),
   ok = application:start(cowlib),
   ok = application:start(cowboy),
-  ok = application:start(sync),
+  %ok = application:start(sync),
   ok = application:start(gyrus).
 
 start(_StartType, _StartArgs) ->

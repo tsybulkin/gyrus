@@ -199,7 +199,7 @@ function BoardConnection(board, baseUrl, color, level) {
 
     }
 
-    var ws = new WebSocket(baseUrl + '/new_game/' + color + '/' + level);
+    var ws = new WebSocket(baseUrl + 'new_game/' + color + '/' + level);
     ws.onopen = function () {
         state = 'connected';
     };
@@ -289,4 +289,3 @@ console.log('demo counters', msg);
         ws.close();
     }
 }
-
